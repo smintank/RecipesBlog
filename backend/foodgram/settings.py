@@ -11,7 +11,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-o4w5+%^rrtm7=d11)a
 
 DEBUG = bool(int(os.getenv("DEBUG", default=0)))
 
-# ALLOWED_HOSTS = []
 ALLOWED_HOSTS = str(os.getenv('ALLOWED_HOSTS')).split(' ')
 
 INSTALLED_APPS = [
@@ -99,13 +98,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'backend_static/static'
 
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
