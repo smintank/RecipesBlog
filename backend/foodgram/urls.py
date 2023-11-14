@@ -5,7 +5,7 @@ from rest_framework import routers
 
 from foodgram import settings
 
-from recipes.views import RecipeViewSet, UserViewSet
+from recipes.views import RecipeViewSet, UserViewSet, IngredientViewSet
 
 router = routers.DefaultRouter()
 router.register('users', UserViewSet)
