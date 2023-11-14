@@ -22,7 +22,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'measurement_unit'
         )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'name', 'measurement_unit')
 
 
 class TagSerializer(serializers.ModelSerializer):
