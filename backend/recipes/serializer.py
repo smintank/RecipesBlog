@@ -1,10 +1,10 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-import base64
 from django.core.files.base import ContentFile
+import base64
 
-from recipes.models import Ingredient, Tag, Recipe, User, Subscription
+from recipes.models import Ingredient, Tag, Recipe, User, Subscription, Favorite
 
 
 class Base64ImageField(serializers.ImageField):
@@ -34,18 +34,21 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer(required=False, many=True)
-    tags = TagSerializer(required=False, many=True)
-    image = Base64ImageField()
+class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Recipe
-        fields = (
-            'id', 'name', 'text', 'image', 'cooking_time',
-            'tags', 'ingredients', 'author'
-        )
-        read_only_fields = ('id', 'author')
+        model = Favorite
+        fields = ('recipe', 'user', )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['id'] = instance.recipe.id
+        data['name'] = instance.recipe.name
+        data['image'] = instance.recipe.image.url
+        data['cooking_time'] = instance.recipe.cooking_time
+        del data['recipe']
+        del data['user']
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -76,3 +79,27 @@ class UserSerializer(serializers.ModelSerializer):
             subscription=obj.id
         ).exists()
 
+
+class RecipeSerializer(serializers.ModelSerializer):
+    ingredients = IngredientSerializer(required=False, many=True)
+    tags = TagSerializer(required=False, many=True)
+    author = UserSerializer(required=True)
+    image = Base64ImageField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.BooleanField(default=False)
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'name', 'text', 'image', 'cooking_time', 'tags',
+            'ingredients', 'author', 'is_favorited', 'is_in_shopping_cart'
+        )
+        read_only_fields = (
+            'id', 'author' 'is_favorited', 'is_in_shopping_cart', 'tags',
+            'ingredients')
+
+    def get_is_favorited(self, obj):
+        return Favorite.objects.filter(
+            user=self.context['request'].user,
+            recipe=obj.id
+        ).exists()

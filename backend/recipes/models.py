@@ -79,6 +79,10 @@ class Recipe(models.Model):
         Tag, verbose_name='Теги',
         related_name='recipes'
     )
+    favorite = models.ManyToManyField(
+        User, through='Favorite',
+        related_name='recipe_favorite'
+    )
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления'
     )
@@ -89,6 +93,26 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'избранное'
+        verbose_name_plural = 'Избранные'
+
+    def __str__(self):
+        return f'Рецепт {self.recipe} в избранном у {self.user}'
 
 
 class Subscription(models.Model):
