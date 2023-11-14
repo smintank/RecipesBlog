@@ -5,16 +5,17 @@ from rest_framework import routers
 
 from foodgram import settings
 
-from recipes.views import RecipeViewSet
+from recipes.views import RecipeViewSet, UserViewSet
 
 router = routers.DefaultRouter()
+router.register('users', UserViewSet)
 router.register(r'recipes', RecipeViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/', include('djoser.urls')),
-    path('api/', include('djoser.urls.authtoken')),
+    path('api/auth/', include('djoser.urls.authtoken')),
 ]
 
 

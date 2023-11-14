@@ -1,8 +1,10 @@
+from django.core.validators import RegexValidator
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 import base64
 from django.core.files.base import ContentFile
 
-from recipes.models import Ingredient, Tag, Recipe
+from recipes.models import Ingredient, Tag, Recipe, User, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
@@ -33,14 +35,44 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer(required=False, many=True)
-    tag = TagSerializer(required=False, many=True)
-    image = Base64ImageField(required=False, allow_null=True)
+    ingredients = IngredientSerializer(required=False, many=True)
+    tags = TagSerializer(required=False, many=True)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'name', 'text', 'image', 'cooking_time',
-            'tags', 'ingredient', 'author', 'tag'
+            'tags', 'ingredients', 'author'
         )
         read_only_fields = ('id', 'author')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        max_length=150,
+        validators=[
+            RegexValidator(regex=r'^[\w.@+-]+\z'),
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id', 'username', 'first_name', 'last_name',
+            'email', 'is_subscribed'
+        )
+
+    def get_is_subscribed(self, obj):
+        return Subscription.objects.filter(
+            user=self.context['request'].user,
+            subscription=obj.id
+        ).exists()
+

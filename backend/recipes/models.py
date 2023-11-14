@@ -1,7 +1,22 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-User = get_user_model()
+
+class User(AbstractUser):
+    email = models.EmailField(max_length=254, unique=True)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+
+    REQUIRED_FIELDS = [
+        'first_name', 'last_name', 'email'
+    ]
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
 
 
 class Ingredient(models.Model):
@@ -58,11 +73,11 @@ class Recipe(models.Model):
     )
     ingredient = models.ManyToManyField(
         Ingredient, verbose_name='Ингридиенты',
-        related_name='ingredient_id'
+        related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tag, verbose_name='Теги',
-        related_name='tag_id'
+        related_name='recipes'
     )
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления'
@@ -75,3 +90,22 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name='Подписчик',
+    )
+    subscription = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='Подписан на'
+    )
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'Пользователь {self.user} подписан на {self.subscription}'
