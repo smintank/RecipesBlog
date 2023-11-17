@@ -1,8 +1,10 @@
-from rest_framework import viewsets, views, status
+from rest_framework import viewsets, status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.forms.models import model_to_dict
 
 from recipes.models import Recipe, User, Ingredient, Favorite
 from recipes.serializer import (RecipeSerializer, UserSerializer,
@@ -20,33 +22,66 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer
 
 
-class FavoriteAPIView(views.APIView):
-    def post(self, request, pk):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
-        if Favorite.objects.filter(user=user, recipe=recipe).exists():
-            return Response(
-                {'errors': 'Вы уже подписаны на этот рецепт'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        request.data['user'] = user.id
+class FavoriteCreateView(generics.CreateAPIView):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def perform_create(self, serializer):
+        recipe = get_object_or_404(
+            Recipe.objects.all(),
+            pk=self.kwargs.get('pk')
+        )
+        return serializer.save(user=self.request.user.id, recipes=recipe.id)
+
+
+class FavoriteDeleteView(generics.DestroyAPIView):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = get_object_or_404(
+            Favorite.objects.all(),
+            user=self.request.user,
+            recipe=self.kwargs.get('pk')
+        )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        recipe = get_object_or_404(
+            Recipe.objects.all(),
+            pk=self.kwargs.get('pk')
+        )
+
+        request.data['user'] = self.request.user.id
         request.data['recipe'] = recipe.id
 
-        serializer = FavoriteSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        reversed_data = model_to_dict(
+            recipe, fields=['id', 'name', 'cooking_time']
+        )
+        reversed_data['image'] = request.build_absolute_uri(recipe.image.url)
+        headers = self.get_success_headers(serializer.data)
+        return Response(reversed_data, status=status.HTTP_201_CREATED,
+                        headers=headers)
 
-    def delete(self, request, pk):
-        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
-        user = self.request.user.id
-        instance = Favorite.objects.filter(user=user, recipe=recipe.id)
-        if not instance.exists():
-            return Response(
-                {'errors': 'У вас в избранном нет этого рецепта'},
-                status=status.HTTP_400_BAD_REQUEST)
-        instance.delete()
+    def destroy(self, request, *args, **kwargs):
+        instance = get_object_or_404(
+            Favorite.objects.all(),
+            user=self.request.user,
+            recipe=self.kwargs.get('pk')
+        )
+        self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

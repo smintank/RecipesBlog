@@ -1,6 +1,6 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 from django.core.files.base import ContentFile
 import base64
 
@@ -32,23 +32,6 @@ class TagSerializer(serializers.ModelSerializer):
             'id', 'name', 'color', 'slug'
         )
         read_only_fields = ('id',)
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Favorite
-        fields = ('recipe', 'user', )
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['id'] = instance.recipe.id
-        data['name'] = instance.recipe.name
-        data['image'] = instance.recipe.image.url
-        data['cooking_time'] = instance.recipe.cooking_time
-        del data['recipe']
-        del data['user']
-        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -103,3 +86,29 @@ class RecipeSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             recipe=obj.id
         ).exists()
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe')
+            )
+        ]
+
+    class Meta:
+        model = User
+        fields = (
+            'id', 'username', 'first_name', 'last_name',
+            'email', 'is_subscribed'
+        )
+
+
+
+
+
+
