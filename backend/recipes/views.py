@@ -1,14 +1,13 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
 
-from recipes.models import Recipe, User, Ingredient, Favorite
-from recipes.serializer import (RecipeSerializer, UserSerializer,
-                                IngredientSerializer, FavoriteSerializer)
+from recipes.models import Recipe, Ingredient, Favorite
+from recipes.serializer import (RecipeSerializer, IngredientSerializer,
+                                FavoriteSerializer)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -92,13 +91,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('id')
-    serializer_class = UserSerializer
-
-    @action(detail=False, methods=['GET'])
-    def me(self, request):
-        self.kwargs['pk'] = request.user.id
-        return self.retrieve(request)

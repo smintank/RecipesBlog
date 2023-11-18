@@ -1,10 +1,12 @@
-from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 from django.core.files.base import ContentFile
+
+import djoser.serializers
 import base64
 
-from recipes.models import Ingredient, Tag, Recipe, User, Subscription, Favorite
+from foodgram.settings import AUTH_USER_MODEL as USER
+from recipes.models import Ingredient, Tag, Recipe, Subscription, Favorite
 
 
 class Base64ImageField(serializers.ImageField):
@@ -34,23 +36,11 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        max_length=150,
-        validators=[
-            RegexValidator(regex=r'^[\w.@+-]+\z'),
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
+class UserSerializer(djoser.serializers.UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = User
+        model = USER
         fields = (
             'id', 'username', 'first_name', 'last_name',
             'email', 'is_subscribed'
@@ -58,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         return Subscription.objects.filter(
-            user=self.context['request'].user,
+            user=self.context['request'].user.id,
             subscription=obj.id
         ).exists()
 
