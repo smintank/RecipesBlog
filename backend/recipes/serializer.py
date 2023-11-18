@@ -2,11 +2,10 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from django.core.files.base import ContentFile
 
-import djoser.serializers
 import base64
+import djoser.serializers
 
-from foodgram.settings import AUTH_USER_MODEL as USER
-from recipes.models import Ingredient, Tag, Recipe, Subscription, Favorite
+from recipes.models import Ingredient, Tag, Recipe, Subscription, Favorite, User
 
 
 class Base64ImageField(serializers.ImageField):
@@ -40,7 +39,7 @@ class UserSerializer(djoser.serializers.UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = USER
+        model = User
         fields = (
             'id', 'username', 'first_name', 'last_name',
             'email', 'is_subscribed'
