@@ -17,8 +17,14 @@ class User(AbstractUser):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)
-    measurement_unit = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Название'
+    )
+    measurement_unit = models.CharField(
+        max_length=200,
+        verbose_name='Единица измерения'
+    )
 
     class Meta:
         verbose_name = 'ингридиент'
@@ -69,18 +75,19 @@ class Recipe(models.Model):
         verbose_name='Изображение'
     )
     ingredients = models.ManyToManyField(
-        Ingredient, verbose_name='Ингридиенты',
-        related_name='recipes'
+        Ingredient, through='IngredientAmount',
+        verbose_name='Ингридиенты'
     )
     tags = models.ManyToManyField(
-        Tag, verbose_name='Теги',
+        Tag,
+        verbose_name='Теги',
         related_name='recipes'
     )
     favorite = models.ManyToManyField(
         User, through='Favorite',
         related_name='recipe_favorite'
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления'
     )
 
