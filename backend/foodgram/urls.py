@@ -5,11 +5,13 @@ from rest_framework import routers
 
 from foodgram import settings
 
-from recipes.views import (RecipeViewSet, IngredientViewSet, FavoriteView)
+from recipes.views import (RecipeViewSet, IngredientViewSet, FavoriteView,
+                           TagViewSet)
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
 router.register(r'ingredients', IngredientViewSet)
+router.register(r'tags', TagViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

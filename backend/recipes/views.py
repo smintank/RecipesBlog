@@ -5,30 +5,22 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
 
-from recipes.models import Recipe, Ingredient, Favorite
+from recipes.models import Recipe, Ingredient, Favorite, Tag
 from recipes.serializer import (RecipeSerializer, IngredientSerializer,
-                                FavoriteSerializer)
+                                FavoriteSerializer, TagSerializer)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    http_method_names = ['get']
 
 
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    pagination_class = None
 
-class FavoriteCreateView(generics.CreateAPIView):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = (IsAuthenticated, )
-
-    def perform_create(self, serializer):
-        recipe = get_object_or_404(
-            Recipe.objects.all(),
-            pk=self.kwargs.get('pk')
-        )
-        return serializer.save(user=self.request.user.id, recipes=recipe.id)
 
 
 class FavoriteDeleteView(generics.DestroyAPIView):

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from colorfield.fields import ColorField
 
 
 class User(AbstractUser):
@@ -39,13 +40,11 @@ class Tag(models.Model):
         max_length=200,
         verbose_name='Имя',
     )
-    color = models.CharField(
-        max_length=7,
-        verbose_name='Цвет',
+    color = ColorField(
+        verbose_name='Цвет'
     )
     slug = models.SlugField(
         max_length=200,
-        verbose_name='Slug',
         unique=True
     )
 
