@@ -5,7 +5,8 @@ from django.core.files.base import ContentFile
 import base64
 import djoser.serializers
 
-from recipes.models import Ingredient, Tag, Recipe, Subscription, Favorite, User
+from recipes.models import (Ingredient, IngredientAmount, Tag, Recipe,
+                            Subscription, Favorite, User)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -52,13 +53,33 @@ class UserSerializer(djoser.serializers.UserSerializer):
         ).exists()
 
 
+class IngredientAmountSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    measurement_unit = serializers.SerializerMethodField()
+
+    class Meta:
+        model = IngredientAmount
+        fields = ('id', 'name', 'amount', 'measurement_unit')
+
+    def get_id(self, obj):
+        return obj.ingredient.id
+
+    def get_name(self, obj):
+        return obj.ingredient.name
+
+    def get_measurement_unit(self, obj):
+        return obj.ingredient.measurement_unit
+
+
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer(required=False, many=True)
-    tags = TagSerializer(required=False, many=True)
+    ingredients = IngredientAmountSerializer(
+        source='ingredientamount_set', read_only=True, many=True)
+    tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(required=True)
     image = Base64ImageField()
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.BooleanField(default=False)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(default=False, read_only=True)
 
     class Meta:
         model = Recipe
@@ -66,9 +87,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'id', 'name', 'text', 'image', 'cooking_time', 'tags',
             'ingredients', 'author', 'is_favorited', 'is_in_shopping_cart'
         )
-        read_only_fields = (
-            'id', 'author' 'is_favorited', 'is_in_shopping_cart', 'tags',
-            'ingredients')
 
     def get_is_favorited(self, obj):
         return Favorite.objects.filter(
@@ -78,7 +96,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
@@ -88,16 +105,3 @@ class FavoriteSerializer(serializers.ModelSerializer):
                 fields=('user', 'recipe')
             )
         ]
-
-    class Meta:
-        model = User
-        fields = (
-            'id', 'username', 'first_name', 'last_name',
-            'email', 'is_subscribed'
-        )
-
-
-
-
-
-

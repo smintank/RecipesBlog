@@ -14,11 +14,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
+    http_method_names = ['get']
 
-
-class FavoriteViewSet(viewsets.ModelViewSet):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
 
 
 class FavoriteCreateView(generics.CreateAPIView):
@@ -59,19 +56,18 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
             Recipe.objects.all(),
             pk=self.kwargs.get('pk')
         )
-
         request.data['user'] = self.request.user.id
         request.data['recipe'] = recipe.id
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        reversed_data = model_to_dict(
+        return_data = model_to_dict(
             recipe, fields=['id', 'name', 'cooking_time']
         )
-        reversed_data['image'] = request.build_absolute_uri(recipe.image.url)
+        return_data['image'] = request.build_absolute_uri(recipe.image.url)
         headers = self.get_success_headers(serializer.data)
-        return Response(reversed_data, status=status.HTTP_201_CREATED,
+        return Response(return_data, status=status.HTTP_201_CREATED,
                         headers=headers)
 
     def destroy(self, request, *args, **kwargs):
@@ -88,6 +84,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = PageNumberPagination
-    
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
