@@ -6,7 +6,7 @@ import base64
 import djoser.serializers
 
 from recipes.models import (Ingredient, IngredientAmount, Tag, Recipe,
-                            Subscription, Favorite, User)
+                            Subscription, Favorite, User, ShoppingCart)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -24,7 +24,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'measurement_unit'
         )
-        read_only_fields = ('id', 'name', 'measurement_unit')
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -54,32 +53,38 @@ class UserSerializer(djoser.serializers.UserSerializer):
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    measurement_unit = serializers.SerializerMethodField()
+    ingredient = IngredientSerializer(read_only=True)
 
     class Meta:
         model = IngredientAmount
-        fields = ('id', 'name', 'amount', 'measurement_unit')
+        fields = ('id', 'ingredient', 'amount')
 
-    def get_id(self, obj):
-        return obj.ingredient.id
 
-    def get_name(self, obj):
-        return obj.ingredient.name
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(default=False,
+                                                   read_only=True)
 
-    def get_measurement_unit(self, obj):
-        return obj.ingredient.measurement_unit
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'name', 'text', 'image', 'cooking_time', 'tags',
+            'ingredients', 'author', 'is_favorited', 'is_in_shopping_cart'
+        )
+
+    def get_is_favorited(self, obj):
+        return Favorite.objects.filter(
+            user=self.context['request'].user,
+            recipe=obj.id
+        ).exists()
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientAmountSerializer(
-        source='ingredientamount_set', read_only=True, many=True)
-    tags = TagSerializer(many=True, read_only=True)
-    author = UserSerializer(required=True)
+    ingredients = IngredientAmountSerializer(many=True, read_only=True)
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(default=False, read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(default=False,
+                                                   read_only=True)
 
     class Meta:
         model = Recipe
@@ -96,12 +101,56 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
-                fields=('user', 'recipe')
-            )
+                fields=('user', 'recipe'),
+                message='Этот рецепт уже добавлен в избранное',
+            ),
         ]
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subscription
+        fields = ('user', 'subscription')
+
+    def validate(self, data):
+        if data['user'] == data['subscription']:
+            raise serializers.ValidationError(
+                'Вы не можете быть подписаны на себя'
+            )
+        if Subscription.objects.filter(
+                user=data['user'],
+                subscription=data['subscription']
+        ).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны на этого пользователя'
+            )
+        return data
+
+
+class SubscriptionListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subscription
+        fields = ('user', 'subscription')
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('id', 'ingredient_amount', 'user')
+
+
+class DownloadCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('id', 'ingredient_amount', 'user')
