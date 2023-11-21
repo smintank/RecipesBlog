@@ -1,74 +1,58 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
+from django_filters.rest_framework import DjangoFilterBackend
 
-from recipes.models import Recipe, Ingredient, Favorite, Tag
-from recipes.serializer import (RecipeSerializer, IngredientSerializer,
-                                FavoriteSerializer, TagSerializer)
+from recipes.models import (
+    Recipe, Ingredient, Favorite, Tag, Subscription, ShoppingCart
+)
+from recipes.serializer import (
+    RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
+    SubscriptionListSerializer, SubscribeSerializer,
+    ShoppingCartSerializer, DownloadCartSerializer
+)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
     pagination_class = None
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('name',)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
     pagination_class = None
-
-
-
-class FavoriteDeleteView(generics.DestroyAPIView):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = (IsAuthenticated, )
-
-    def destroy(self, request, *args, **kwargs):
-        instance = get_object_or_404(
-            Favorite.objects.all(),
-            user=self.request.user,
-            recipe=self.kwargs.get('pk')
-        )
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Favorite.objects.all()
     serializer_class = FavoriteSerializer
     permission_classes = (IsAuthenticated,)
+    path_arg = 'recipe'
 
     def create(self, request, *args, **kwargs):
-        recipe = get_object_or_404(
-            Recipe.objects.all(),
-            pk=self.kwargs.get('pk')
-        )
         request.data['user'] = self.request.user.id
-        request.data['recipe'] = recipe.id
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return_data = model_to_dict(
-            recipe, fields=['id', 'name', 'cooking_time']
-        )
-        return_data['image'] = request.build_absolute_uri(recipe.image.url)
-        headers = self.get_success_headers(serializer.data)
-        return Response(return_data, status=status.HTTP_201_CREATED,
-                        headers=headers)
+        request.data[self.path_arg] = self.kwargs.get('pk')
+        return super().create(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        instance = get_object_or_404(
-            Favorite.objects.all(),
-            user=self.request.user,
-            recipe=self.kwargs.get('pk')
-        )
-        self.perform_destroy(instance)
+        if not (instance := self.queryset.filter(
+                {'user': self.request.user.id,
+                 self.path_arg: self.kwargs.get('pk')}
+        )):
+            return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -76,7 +60,47 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = PageNumberPagination
+
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+
+class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscribeSerializer
+    permission_classes = (IsAuthenticated,)
+    path_arg = 'subscription'
+
+    def create(self, request, *args, **kwargs):
+        request.data['user'] = self.request.user.id
+        request.data[self.path_arg] = self.kwargs.get('pk')
+        return super().create(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not (instance := self.queryset.filter(
+                {'user': self.request.user.id,
+                 self.path_arg: self.kwargs.get('pk')}
+        )):
+            return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(instance.first())
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionListView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionListSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = ShoppingCart.objects.all()
+    serializer_class = ShoppingCartSerializer
+
+
+class DownloadCartView(generics.RetrieveAPIView):
+    queryset = ShoppingCart.objects.all()
+    serializer_class = DownloadCartSerializer

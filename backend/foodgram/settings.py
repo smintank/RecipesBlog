@@ -7,7 +7,10 @@ load_dotenv(find_dotenv())
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-o4w5+%^rrtm7=d11)at_m71ns*d^062_0063+szj%()f7mjz81')
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    default='django-insecure-o4w5+%^rrtm7=d11)at_m71ns*d^062_0063+szj%()f7mjz81'
+)
 
 DEBUG = bool(int(os.getenv("DEBUG", default=0)))
 
@@ -21,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'rest_framework.authtoken',
     'djoser',
     'recipes.apps.RecipesConfig',
@@ -59,7 +63,9 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('django.db.backends.postgresql', 'django.db.backends.sqlite3'),
+        'ENGINE': os.getenv(
+            'django.db.backends.postgresql', 'django.db.backends.sqlite3'
+        ),
         'NAME': os.getenv('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
         'USER': os.getenv('POSTGRES_USER', ''),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
@@ -73,16 +79,20 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME':
+            'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -118,7 +128,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
 
 }
@@ -128,6 +139,7 @@ DJOSER = {
     'HIDE_USERS': False,
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.AllowAny'],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
     'SERIALIZERS': {
         'user': 'recipes.serializer.UserSerializer',

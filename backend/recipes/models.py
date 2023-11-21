@@ -8,6 +8,8 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     email = models.EmailField(unique=True)
+    first_name = models.CharField(blank=False, max_length=150)
+    last_name = models.CharField(blank=False, max_length=150)
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -56,6 +58,18 @@ class Tag(models.Model):
         return self.name
 
 
+class IngredientAmount(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredient,
+        verbose_name='Ингридиент',
+        on_delete=models.CASCADE,
+        related_name='ingredient_amount',
+    )
+    amount = models.PositiveIntegerField(
+        verbose_name='Количество'
+    )
+
+
 class Recipe(models.Model):
     name = models.CharField(
         max_length=200,
@@ -74,8 +88,9 @@ class Recipe(models.Model):
         verbose_name='Изображение'
     )
     ingredients = models.ManyToManyField(
-        Ingredient, through='IngredientAmount',
-        verbose_name='Ингридиенты'
+        IngredientAmount,
+        verbose_name='Ингридиенты',
+        related_name='recipe_favorite'
     )
     tags = models.ManyToManyField(
         Tag,
@@ -87,7 +102,7 @@ class Recipe(models.Model):
         through='Favorite',
         related_name='recipe_favorite'
     )
-    cooking_time = models.PositiveIntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления'
     )
 
@@ -97,22 +112,6 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class IngredientAmount(models.Model):
-    recipe = models.ForeignKey(
-        Recipe,
-        verbose_name='Рецепт',
-        on_delete=models.CASCADE
-    )
-    ingredient = models.ForeignKey(
-        Ingredient,
-        verbose_name='Ингридиент',
-        on_delete=models.CASCADE
-    )
-    amount = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
 
 
 class Favorite(models.Model):
@@ -130,9 +129,35 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранные'
+        models.UniqueConstraint(
+            fields=['user', 'recipe'],
+            name='user_recipe_favorite'
+        )
 
     def __str__(self):
-        return f'Рецепт {self.recipe} в избранном у {self.user}'
+        return f'Рецепт "{self.recipe}" в избранном у {self.user}'
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        verbose_name='Пользователь'
+    )
+    ingredient_amount = models.ManyToManyField(
+        IngredientAmount,
+        related_name='shopping_cart',
+        verbose_name='Ингредиент и количество'
+    )
+
+    class Meta:
+        verbose_name = 'товар'
+        verbose_name_plural = 'Товары'
+
+    def __str__(self):
+        return f'{self.ingredient_amount.ingredient.name}: ' \
+               f'{self.ingredient_amount.amount} ' \
+               f'{self.ingredient_amount.ingredient.measurement_unit}'
 
 
 class Subscription(models.Model):
@@ -152,4 +177,4 @@ class Subscription(models.Model):
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return f'Пользователь {self.user} подписан на {self.subscription}'
+        return f'{self.user} подписан на {self.subscription}'
