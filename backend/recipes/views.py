@@ -1,10 +1,9 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, generics
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
-from django.shortcuts import get_object_or_404
-from django.forms.models import model_to_dict
 from django_filters.rest_framework import DjangoFilterBackend
 
 from recipes.models import (
@@ -67,16 +66,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Subscription.objects.all()
     serializer_class = SubscribeSerializer
+    pagination_class = LimitOffsetPagination
     permission_classes = (IsAuthenticated,)
+
+    def get_serializer_context(self):
+        context = {'request': self.request}
+        return context
 
     def create(self, request, *args, **kwargs):
         request.data['user'] = self.request.user.id
-        request.data['subscription'] = self.kwargs.get('pk')
+        request.data['subscription'] = get_object_or_404(
+            User, id=self.kwargs.get('pk')).id
         return super().create(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        subscription = get_object_or_404(User, id=self.kwargs.get('pk')).id
         if not (instance := self.queryset.filter(
-                user=self.request.user.id, subscription=self.kwargs.get('pk'))):
+                user=self.request.user.id, subscription=subscription)):
             return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -84,9 +90,10 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscriptionListView(generics.CreateAPIView, generics.DestroyAPIView):
+class SubscriptionListView(generics.ListAPIView):
     queryset = Subscription.objects.all()
-    serializer_class = SubscriptionListSerializer
+    serializer_class = SubscribeSerializer
+    pagination_class = LimitOffsetPagination
     permission_classes = (IsAuthenticated,)
 
 

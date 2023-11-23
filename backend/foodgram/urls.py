@@ -16,10 +16,10 @@ router.register(r'tags', TagViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/users/subscriptions/', SubscriptionListView.as_view()),
     path('api/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
     path('api/users/<int:pk>/subscribe/', SubscribeView.as_view()),
-    path('api/users/subscriptions/', SubscriptionListView.as_view()),
     path('api/recipes/<int:pk>/favorite/', FavoriteView.as_view()),
     path('api/recipes/<int:pk>/shopping_cart/', ShoppingCartView.as_view()),
     path('api/recipes/download_shopping_cart/', DownloadCartView.as_view()),

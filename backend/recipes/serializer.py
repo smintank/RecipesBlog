@@ -1,6 +1,8 @@
+from collections import OrderedDict
+from django.core.files.base import ContentFile
+from django.forms.models import model_to_dict
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from django.core.files.base import ContentFile
 
 import base64
 import djoser.serializers
@@ -133,6 +135,28 @@ class SubscribeSerializer(serializers.ModelSerializer):
                 'Вы уже подписаны на этого пользователя'
             )
         return data
+
+    def to_representation(self, instance):
+        instance = super().to_representation(instance)
+        user = User.objects.get(id=instance['subscription'])
+        recipes = Recipe.objects.filter(author=user.id)
+        recipe_set = []
+        for recipe in recipes:
+            result = model_to_dict(recipe,
+                                   fields=['id', 'name', 'cooking_time'])
+            result['image'] = self.context['request'].build_absolute_uri(
+                recipe.image.url)
+            recipe_set.append(result)
+
+        new_data = {'id': user.id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'is_subscribed': True,
+                    'recipes': recipe_set,
+                    'recipes_count': recipes.count()}
+        return new_data
 
 
 class SubscriptionListSerializer(serializers.ModelSerializer):
