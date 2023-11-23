@@ -14,6 +14,7 @@ from recipes.serializer import (
     SubscriptionListSerializer, SubscribeSerializer,
     ShoppingCartSerializer, DownloadCartSerializer
 )
+from recipes.permissions import IsAuthorOrReadOnly
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
