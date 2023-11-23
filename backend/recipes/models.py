@@ -58,18 +58,6 @@ class Tag(models.Model):
         return self.name
 
 
-class IngredientAmount(models.Model):
-    ingredient = models.ForeignKey(
-        Ingredient,
-        verbose_name='Ингридиент',
-        on_delete=models.CASCADE,
-        related_name='ingredient_amount',
-    )
-    amount = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
-
-
 class Recipe(models.Model):
     name = models.CharField(
         max_length=200,
@@ -88,7 +76,8 @@ class Recipe(models.Model):
         verbose_name='Изображение'
     )
     ingredients = models.ManyToManyField(
-        IngredientAmount,
+        Ingredient,
+        through='RecipeIngredient',
         verbose_name='Ингридиенты',
         related_name='recipe_favorite'
     )
@@ -112,6 +101,24 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт',
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients'
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        verbose_name='Ингридиент',
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients'
+    )
+    amount = models.PositiveIntegerField(
+        verbose_name='Количество'
+    )
 
 
 class Favorite(models.Model):

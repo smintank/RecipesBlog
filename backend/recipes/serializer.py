@@ -7,7 +7,7 @@ from rest_framework.validators import UniqueTogetherValidator
 import base64
 import djoser.serializers
 
-from recipes.models import (Ingredient, IngredientAmount, Tag, Recipe,
+from recipes.models import (Ingredient, RecipeIngredient, Tag, Recipe,
                             Subscription, Favorite, User, ShoppingCart)
 
 
@@ -80,6 +80,24 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             recipe=obj.id
         ).exists()
 
+    def get_is_in_shopping_cart(self, obj):
+        return ShoppingCart.objects.filter(
+            user=self.context['request'].user,
+            recipe=obj.id
+        ).exists()
+
+
+class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source='ingredient',
+        queryset=Ingredient.objects.all(),
+        write_only=True
+    )
+    amount = serializers.IntegerField(min_value=1, write_only=True)
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
 
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True, read_only=True)
