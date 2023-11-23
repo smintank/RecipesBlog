@@ -6,6 +6,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from django_filters.rest_framework import DjangoFilterBackend
 
+from recipes.filters import RecipeFilter
 from recipes.models import (
     Recipe, Ingredient, Favorite, Tag, Subscription, ShoppingCart
 )
