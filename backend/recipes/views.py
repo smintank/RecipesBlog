@@ -39,6 +39,10 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = FavoriteSerializer
     permission_classes = (IsAuthenticated,)
 
+    def get_serializer_context(self):
+        context = {'request': self.request}
+        return context
+
     def create(self, request, *args, **kwargs):
         request.data['user'] = self.request.user.id
         request.data['recipe'] = self.kwargs.get('pk')
@@ -46,7 +50,8 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         if not (instance := self.queryset.filter(
-                user=self.request.user.id, recipe=self.kwargs.get('pk'))):
+                user=self.request.user.id,
+                recipe=get_object_or_404(Recipe, id=self.kwargs.get('pk')))):
             return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
                             status=status.HTTP_400_BAD_REQUEST)
 

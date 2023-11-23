@@ -130,6 +130,17 @@ class FavoriteSerializer(serializers.ModelSerializer):
             ),
         ]
 
+    def to_representation(self, instance):
+        instance = super().to_representation(instance)
+        recipe = Recipe.objects.get(id=instance['recipe'])
+        new_data = {'id': recipe.id,
+                    'name': recipe.name,
+                    'cooking_time': recipe.cooking_time,
+                    'image': self.context['request'].build_absolute_uri(
+                        recipe.image.url)
+                    }
+        return new_data
+
 
 class SubscribeSerializer(serializers.ModelSerializer):
 
