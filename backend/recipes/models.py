@@ -79,12 +79,12 @@ class Recipe(models.Model):
         Ingredient,
         through='RecipeIngredient',
         verbose_name='Ингридиенты',
-        related_name='recipe_favorite'
+        blank=False
     )
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Теги',
-        related_name='recipes'
+        related_name='recipe'
     )
     favorite = models.ManyToManyField(
         User,

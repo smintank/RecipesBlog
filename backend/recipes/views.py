@@ -8,12 +8,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from recipes.filters import RecipeFilter
 from recipes.models import (
-    Recipe, Ingredient, Favorite, Tag, Subscription, ShoppingCart
+    Recipe, Ingredient, Favorite, Tag, Subscription, ShoppingCart,
+    User
 )
 from recipes.serializer import (
     RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
-    SubscriptionListSerializer, SubscribeSerializer,
-    ShoppingCartSerializer, DownloadCartSerializer
+    SubscribeSerializer, ShoppingCartSerializer, DownloadCartSerializer,
+    RecipeCreateSerializer
 )
 from recipes.permissions import IsAuthorOrReadOnly
 
@@ -62,12 +63,20 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = LimitOffsetPagination
+    permission_classes = [IsAuthorOrReadOnly, ]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ('create', 'partial_update', 'update'):
+            return RecipeCreateSerializer
+        return self.serializer_class
 
 
 class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):

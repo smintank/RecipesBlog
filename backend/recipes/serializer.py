@@ -59,10 +59,15 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'ingredient', 'amount')
 
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
+    ingredients = RecipeIngredientSerializer(
+        source='recipe_ingredients', many=True
+    )
+    tags = TagSerializer(many=True)
+    author = UserSerializer(read_only=True)
+    image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(default=False,
-                                                   read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
@@ -96,12 +101,14 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount')
 
-class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientAmountSerializer(many=True, read_only=True)
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    ingredients = RecipeIngredientCreateSerializer(many=True, allow_empty=False)
+    author = UserSerializer(read_only=True)
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(default=False,
-                                                   read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    cooking_time = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = Recipe
@@ -115,6 +122,63 @@ class RecipeSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             recipe=obj.id
         ).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        return ShoppingCart.objects.filter(
+            user=self.context['request'].user,
+            recipe=obj.id
+        ).exists()
+
+    def validate_tags(self, data):
+        tags = self.initial_data['tags']
+        if len(set(tags)) != len(tags):
+            raise serializers.ValidationError(
+                'Рецепт не может содержать повторяющиеся теги'
+            )
+        return data
+
+    def validate_ingredients(self, data):
+        ingredients = self.initial_data['ingredients']
+        ingredient_set = [ingredient['id'] for ingredient in ingredients]
+        if len(set(ingredient_set)) != len(ingredient_set):
+            raise serializers.ValidationError(
+                'Рецепт не может содержать повторяющиеся ингредиенты'
+            )
+        return data
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+        for ingredient_data in ingredients_data:
+            RecipeIngredient.objects.create(recipe=recipe, **ingredient_data)
+        return recipe
+
+    def to_representation(self, instance):
+        instance = super().to_representation(instance)
+        instance['ingredients'].clear()
+        instance['tags'].clear()
+        tags_data = self.validated_data['tags']
+        for tag in tags_data:
+            tag_set = {
+                'id': tag.id,
+                'color': tag.color,
+                'name': tag.name,
+                'slug': tag.slug
+            }
+            instance['tags'].append(OrderedDict(tag_set))
+
+        for ingredient_data in self.validated_data['ingredients']:
+            ingredient = ingredient_data['ingredient']
+            ingredient_set = {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.measurement_unit,
+                'amount': ingredient_data['amount']
+            }
+            instance['ingredients'].append(OrderedDict(ingredient_set))
+        return instance
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
