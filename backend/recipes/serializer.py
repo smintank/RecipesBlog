@@ -188,7 +188,25 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = ('id', 'ingredient_amount', 'user')
+        fields = ('recipe', 'user')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe'),
+                message='Этот рецепт уже добавлен в корзину',
+            ),
+        ]
+
+    def to_representation(self, instance):
+        instance = super().to_representation(instance)
+        recipe = Recipe.objects.get(id=instance['recipe'])
+        new_data = {'id': recipe.id,
+                    'name': recipe.name,
+                    'cooking_time': recipe.cooking_time,
+                    'image': self.context['request'].build_absolute_uri(
+                        recipe.image.url)
+                    }
+        return new_data
 
 
 class DownloadCartSerializer(serializers.ModelSerializer):

@@ -151,20 +151,22 @@ class ShoppingCart(models.Model):
         related_name='shopping_cart',
         verbose_name='Пользователь'
     )
-    ingredient_amount = models.ManyToManyField(
-        IngredientAmount,
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
         related_name='shopping_cart',
-        verbose_name='Ингредиент и количество'
+        verbose_name='Рецепт'
     )
 
     class Meta:
         verbose_name = 'товар'
         verbose_name_plural = 'Товары'
+        models.UniqueConstraint(
+            fields=['user', 'recipe'],
+            name='user_recipe_shopping_cart'
+        )
 
     def __str__(self):
-        return f'{self.ingredient_amount.ingredient.name}: ' \
-               f'{self.ingredient_amount.amount} ' \
-               f'{self.ingredient_amount.ingredient.measurement_unit}'
+        return f'Рецепт "{self.recipe}" в корзине у {self.user}'
 
 
 class Subscription(models.Model):

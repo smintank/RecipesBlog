@@ -102,8 +102,30 @@ class SubscriptionListView(generics.ListAPIView):
 class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = ShoppingCart.objects.all()
     serializer_class = ShoppingCartSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_serializer_context(self):
+        context = {'request': self.request}
+        return context
+
+    def create(self, request, *args, **kwargs):
+        request.data['user'] = self.request.user.id
+        request.data['recipe'] = self.kwargs.get('pk')
+        return super().create(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not (instance := self.queryset.filter(
+                user=self.request.user.id,
+                recipe=get_object_or_404(Recipe, id=self.kwargs.get('pk')))):
+            return Response(
+                {'error': 'Этого рецепта итак нет в вашей корзине!'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(instance.first())
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DownloadCartView(generics.RetrieveAPIView):
     queryset = ShoppingCart.objects.all()
     serializer_class = DownloadCartSerializer
+    permission_classes = (IsAuthenticated,)
