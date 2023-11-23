@@ -11,7 +11,7 @@ from recipes.views import (RecipeViewSet, IngredientViewSet, FavoriteView,
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
-router.register(r'ingredients', IngredientViewSet, basename='recipe')
+router.register(r'ingredients', IngredientViewSet)
 router.register(r'tags', TagViewSet)
 
 urlpatterns = [

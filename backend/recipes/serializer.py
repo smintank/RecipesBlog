@@ -20,14 +20,6 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class IngredientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ingredient
-        fields = (
-            'id', 'name', 'measurement_unit'
-        )
-
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -54,11 +46,16 @@ class UserSerializer(djoser.serializers.UserSerializer):
         ).exists()
 
 
-class IngredientAmountSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer(read_only=True)
+class IngredientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')
+
+
+class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = IngredientAmount
+        model = RecipeIngredient
         fields = ('id', 'ingredient', 'amount')
 
 
