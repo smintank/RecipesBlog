@@ -153,3 +153,8 @@ media/
 # Others
 node_modules
 
+/recipes/management/commands/load_my_csv_data.py
+/data/recipes.csv
+/data/tags.csv
+/data/users.csv
+/backend_static/

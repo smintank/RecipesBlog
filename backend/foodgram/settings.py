@@ -138,7 +138,7 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.AllowAny'],
+        'user': ['recipes.permissions.ReadOnlyOrNotMePath'],
         'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
     'SERIALIZERS': {

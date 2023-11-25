@@ -40,6 +40,8 @@ class UserSerializer(djoser.serializers.UserSerializer):
         )
 
     def get_is_subscribed(self, obj):
+        if self.context['request'].user.is_anonymous:
+            return False
         return Subscription.objects.filter(
             user=self.context['request'].user.id,
             subscription=obj.id
@@ -77,12 +79,16 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
+        if self.context['request'].user.is_anonymous:
+            return False
         return Favorite.objects.filter(
             user=self.context['request'].user,
             recipe=obj.id
         ).exists()
 
     def get_is_in_shopping_cart(self, obj):
+        if self.context['request'].user.is_anonymous:
+            return False
         return ShoppingCart.objects.filter(
             user=self.context['request'].user,
             recipe=obj.id
