@@ -9,7 +9,7 @@ class RecipeFilter(FilterSet):
     tag = ModelMultipleChoiceFilter(
         field_name='tags__slug',
         queryset=Tag.objects.all(),
-        lable='Tags',
+        label='Tags',
         to_field_name='slug'
 
     )
