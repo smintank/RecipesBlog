@@ -231,18 +231,18 @@ class SubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ('user', 'subscription')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('user', 'subscription'),
+                message='Вы уже подписаны на этого пользователя',
+            ),
+        ]
 
     def validate(self, data):
         if data['user'] == data['subscription']:
             raise serializers.ValidationError(
                 'Вы не можете быть подписаны на себя'
-            )
-        if Subscription.objects.filter(
-                user=data['user'],
-                subscription=data['subscription']
-        ).exists():
-            raise serializers.ValidationError(
-                'Вы уже подписаны на этого пользователя'
             )
         return data
 

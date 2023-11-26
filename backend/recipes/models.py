@@ -186,6 +186,10 @@ class Subscription(models.Model):
     class Meta:
         verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
+        models.UniqueConstraint(
+            fields=['user', 'subscription'],
+            name='user_user_subscription'
+        )
 
     def __str__(self):
         return f'{self.user} подписан на {self.subscription}'
