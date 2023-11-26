@@ -283,7 +283,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         fields = ('recipe', 'user')
         validators = [
             UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
+                queryset=ShoppingCart.objects.all(),
                 fields=('user', 'recipe'),
                 message='Этот рецепт уже добавлен в корзину',
             ),
