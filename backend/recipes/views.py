@@ -1,20 +1,22 @@
+import io
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, generics
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
-from django_filters.rest_framework import DjangoFilterBackend
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from recipes.filters import RecipeFilter
-from recipes.models import (
-    Recipe, Ingredient, Favorite, Tag, Subscription, ShoppingCart,
-    User
-)
+from recipes.models import (Recipe, Ingredient, Favorite, Tag, Subscription,
+                            ShoppingCart, User, RecipeIngredient)
 from recipes.serializer import (
     RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
-    SubscribeSerializer, ShoppingCartSerializer, DownloadCartSerializer,
-    RecipeCreateSerializer
+    SubscribeSerializer, ShoppingCartSerializer, RecipeCreateSerializer
 )
 from recipes.permissions import IsAuthorOrReadOnly
 
@@ -139,7 +141,53 @@ class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DownloadCartView(generics.RetrieveAPIView):
-    queryset = ShoppingCart.objects.all()
-    serializer_class = DownloadCartSerializer
-    permission_classes = (IsAuthenticated,)
+class DownloadCartView(views.APIView):
+    def get(self, request, *args, **kwargs):
+        pdfmetrics.registerFont(TTFont('Roboto-Regular', 'Roboto-Regular.ttf'))
+
+        buffer = io.BytesIO()
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="groceries.pdf"'
+
+        page = canvas.Canvas(response)
+        page.setFont('Roboto-Regular', 16)
+
+        page.drawString(230, 800, 'Список покупок')
+        page.setFont('Roboto-Regular', 12)
+
+        ingredient_set = RecipeIngredient.objects.values(
+            'ingredient__name', 'amount', 'ingredient__measurement_unit'
+        ).filter(
+            recipe__shopping_cart__user=self.request.user.id
+        ).order_by(
+            'ingredient__name'
+        )
+
+        cur_ingredient = ''
+        ingredient_sum = []
+        for item in ingredient_set:
+            if item['ingredient__name'] != cur_ingredient:
+                cur_ingredient = item['ingredient__name']
+                ingredient_sum.append({
+                    'amount': int(item['amount']),
+                    'name': item['ingredient__name'],
+                    'unit': item['ingredient__measurement_unit']
+                })
+            else:
+                ingredient_sum[-1]['amount'] += int(item['amount'])
+
+        height = 760
+
+        for i, ingredient in enumerate(ingredient_sum):
+            height -= 25
+            amount = ingredient['amount']
+            name = ingredient['name'].capitalize()
+            unit = ingredient['unit']
+            page.drawString(70, height, f'{i+1}. {name}')
+            page.drawString(450, height, f'{amount} {unit}')
+
+        page.showPage()
+        page.save()
+
+        buffer.seek(0)
+        return response
