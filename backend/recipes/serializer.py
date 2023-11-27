@@ -1,3 +1,4 @@
+from itertools import islice
 from collections import OrderedDict
 from django.core.files.base import ContentFile
 from django.forms.models import model_to_dict
@@ -262,32 +263,31 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         instance = super().to_representation(instance)
-        user = User.objects.get(id=instance['subscription'])
-        recipes = Recipe.objects.filter(author=user.id)
+        request = self.context['request']
+
+        user = User.objects.prefetch_related('recipes').get(
+            id=instance['subscription'], subscriptions__user=instance['user']
+        )
+
+        if recipe_limit := request.query_params.get('recipes_limit'):
+            recipe_limit = int(recipe_limit)
+
         recipe_set = []
-        for recipe in recipes:
-            result = model_to_dict(recipe,
-                                   fields=['id', 'name', 'cooking_time'])
-            result['image'] = self.context['request'].build_absolute_uri(
-                recipe.image.url)
+        for recipe in islice(user.recipes.all(), recipe_limit):
+            result = model_to_dict(
+                recipe, fields=['id', 'name', 'cooking_time']
+            )
+            result['image'] = request.build_absolute_uri(recipe.image.url)
             recipe_set.append(result)
 
-        new_data = {'id': user.id,
-                    'username': user.username,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'email': user.email,
-                    'is_subscribed': True,
-                    'recipes': recipe_set,
-                    'recipes_count': recipes.count()}
-        return new_data
-
-
-class SubscriptionListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Subscription
-        fields = ('user', 'subscription')
+        return {
+            **model_to_dict(user, fields=[
+                'id', 'username', 'first_name', 'last_name', 'email'
+            ]),
+            'is_subscribed': True,
+            'recipes': recipe_set,
+            'recipes_count': user.recipes.count()
+        }
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):

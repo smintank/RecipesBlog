@@ -86,10 +86,7 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = SubscribeSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAuthenticated,)
-
-    def get_serializer_context(self):
-        context = {'request': self.request}
-        return context
+    filter_backends = (DjangoFilterBackend,)
 
     def create(self, request, *args, **kwargs):
         request.data['user'] = self.request.user.id
@@ -113,6 +110,7 @@ class SubscriptionListView(generics.ListAPIView):
     serializer_class = SubscribeSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAuthenticated,)
+    filter_backends = (DjangoFilterBackend,)
 
 
 class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
