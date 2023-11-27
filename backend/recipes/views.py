@@ -80,6 +80,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeCreateSerializer
         return self.serializer_class
 
+    def list(self, request, *args, **kwargs):
+        request.query_params._mutable = True
+        for param, value in request.query_params.items():
+            if (param in ('is_favorited', 'is_in_shopping_cart')
+                    and value in ('1', '0')):
+                value = str(bool(int(value)))
+                request.query_params[param] = value
+        request.query_params._mutable = False
+        return super().list(request, *args, **kwargs)
+
 
 class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Subscription.objects.all()

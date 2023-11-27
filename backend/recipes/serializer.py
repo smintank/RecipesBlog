@@ -179,7 +179,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
+        if not validated_data.get('tags'):
+            raise serializers.ValidationError('tags - обязательное поле')
+        try:
+            ingredients_data = validated_data.pop('ingredients')
+        except Exception:
+            raise serializers.ValidationError('ingredients - обязательное поле')
+
         for ingredient_data in ingredients_data:
             RecipeIngredient.objects.get_or_create(recipe=instance,
                                                    **ingredient_data)
