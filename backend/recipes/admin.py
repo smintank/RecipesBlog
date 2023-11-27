@@ -10,20 +10,34 @@ class RecipeIngredientInline(admin.TabularInline):
     extra = 1
 
 
-class IngredientAdmin(admin.ModelAdmin):
+class RecipeAdmin(admin.ModelAdmin):
     inlines = [RecipeIngredientInline]
-    list_display = ('id', 'name', 'author', 'text', 'cooking_time')
-    list_filter = ('author',)
+    list_display = ('name', 'author', 'favorite_count')
+    list_filter = ('tags', 'author', 'name')
+
+    @admin.display(description='В избранном')
+    def favorite_count(self, obj):
+        return f'{Favorite.objects.filter(recipe=obj.id).count()}'
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('user', 'subscription')
+    list_display_links = ('user', 'subscription')
+
+
+class IngredientsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'measurement_unit')
+    list_filter = ('name',)
+
+
+class MyUserAdmin(UserAdmin):
+    list_filter = ('email', 'username')
 
 
 admin.site.register(ShoppingCart)
-admin.site.register(Recipe, IngredientAdmin)
+admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Tag)
 admin.site.register(Subscription, SubscriptionAdmin)
-admin.site.register(User, UserAdmin)
+admin.site.register(User, MyUserAdmin)
 admin.site.register(Favorite)
-admin.site.register(Ingredient)
+admin.site.register(Ingredient, IngredientsAdmin)
