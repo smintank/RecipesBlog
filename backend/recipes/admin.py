@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from recipes.models import (Recipe, Ingredient, Tag, Subscription, User,
-                            Favorite, RecipeIngredient)
+                            Favorite, RecipeIngredient, ShoppingCart)
 
 
 class RecipeIngredientInline(admin.TabularInline):
@@ -20,6 +20,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('user', 'subscription')
 
 
+admin.site.register(ShoppingCart)
 admin.site.register(Recipe, IngredientAdmin)
 admin.site.register(Tag)
 admin.site.register(Subscription, SubscriptionAdmin)
