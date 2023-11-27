@@ -55,7 +55,6 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'ingredient', 'amount')
@@ -93,6 +92,23 @@ class RecipeSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             recipe=obj.id
         ).exists()
+
+    def to_representation(self, instance):
+        instance = super().to_representation(instance)
+        ingredients_data = instance.pop('ingredients')
+        instance['ingredients'] = []
+        for ingredient_data in ingredients_data:
+            ingredient = Ingredient.objects.get(
+                id=ingredient_data['ingredient']
+            )
+            ingredient_set = {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.measurement_unit,
+                'amount': ingredient_data['amount']
+            }
+            instance['ingredients'].append(OrderedDict(ingredient_set))
+        return instance
 
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
@@ -202,7 +218,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
@@ -227,7 +242,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Subscription
         fields = ('user', 'subscription')
@@ -277,7 +291,6 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ShoppingCart
         fields = ('recipe', 'user')
@@ -302,7 +315,6 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
 
 class DownloadCartSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ShoppingCart
         fields = ('id', 'ingredient_amount', 'user')

@@ -1,4 +1,3 @@
-import io
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -7,18 +6,19 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
+import io
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 from recipes.filters import RecipeFilter
+from recipes.permissions import IsAuthorOrReadOnly
 from recipes.models import (Recipe, Ingredient, Favorite, Tag, Subscription,
                             ShoppingCart, User, RecipeIngredient)
 from recipes.serializer import (
     RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
     SubscribeSerializer, ShoppingCartSerializer, RecipeCreateSerializer
 )
-from recipes.permissions import IsAuthorOrReadOnly
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
