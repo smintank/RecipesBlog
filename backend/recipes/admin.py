@@ -12,11 +12,17 @@ class RecipeIngredientInline(admin.TabularInline):
 
 class IngredientAdmin(admin.ModelAdmin):
     inlines = [RecipeIngredientInline]
+    list_display = ('id', 'name', 'author', 'text', 'cooking_time')
+    list_filter = ('author',)
+
+
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'subscription')
 
 
 admin.site.register(Recipe, IngredientAdmin)
 admin.site.register(Tag)
-admin.site.register(Subscription)
+admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Favorite)
 admin.site.register(Ingredient)
