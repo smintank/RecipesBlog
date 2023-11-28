@@ -63,14 +63,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv(
-            'django.db.backends.postgresql', 'django.db.backends.sqlite3'
-        ),
-        'NAME': os.getenv('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
+        'ENGINE': os.getenv('django.db.backends.postgresql', ''),
+        'NAME': os.getenv('POSTGRES_DB', ''),
         'USER': os.getenv('POSTGRES_USER', ''),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', 5432)
+        'PORT': os.getenv('DB_PORT', '')
     }
 }
 
@@ -146,3 +144,5 @@ DJOSER = {
         'current_user': 'recipes.serializer.UserSerializer',
     }
 }
+
+SITE_URL = 'http://smfoodgram.ru'
