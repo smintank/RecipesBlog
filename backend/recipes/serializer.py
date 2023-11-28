@@ -8,7 +8,6 @@ from rest_framework.validators import UniqueTogetherValidator
 import base64
 import djoser.serializers
 
-from foodgram.settings import SITE_URL
 from recipes.models import (Ingredient, RecipeIngredient, Tag, Recipe,
                             Subscription, Favorite, User, ShoppingCart)
 
@@ -243,7 +242,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
         new_data = {'id': recipe.id,
                     'name': recipe.name,
                     'cooking_time': recipe.cooking_time,
-                    'image': f'{SITE_URL}/{recipe.image.url}'
+                    'image': self.context['request'].build_absolute_uri(
+                        recipe.image.url)
                     }
         return new_data
 
@@ -283,7 +283,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
             result = model_to_dict(
                 recipe, fields=['id', 'name', 'cooking_time']
             )
-            result['image'] = f'{SITE_URL}/{recipe.image.url}'
+            result['image'] = request.build_absolute_uri(recipe.image.url)
             recipe_set.append(result)
 
         return {
@@ -314,6 +314,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         new_data = {'id': recipe.id,
                     'name': recipe.name,
                     'cooking_time': recipe.cooking_time,
-                    'image': f'{SITE_URL}/{recipe.image.url}'
+                    'image': self.context['request'].build_absolute_uri(
+                        recipe.image.url)
                     }
         return new_data
