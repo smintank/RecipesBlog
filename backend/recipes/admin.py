@@ -41,7 +41,6 @@ class RecipeAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('user', 'subscription')
-    list_display_links = ('user', 'subscription')
 
 
 class IngredientsAdmin(admin.ModelAdmin):
@@ -54,10 +53,22 @@ class MyUserAdmin(UserAdmin):
     list_filter = ('email', 'username', 'is_superuser', 'is_active')
 
 
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    list_display_links = ('user',)
+    list_filter = ('user', 'recipe')
+
+
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    list_display_links = ('user',)
+    list_filter = ('user', 'recipe')
+
+
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientsAdmin)
-admin.site.register(ShoppingCart)
-admin.site.register(Favorite)
+admin.site.register(ShoppingCart, ShoppingCartAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
 admin.site.register(Tag)
 
 admin.site.register(User, MyUserAdmin)
