@@ -41,12 +41,9 @@ class UserSerializer(djoser.serializers.UserSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        if self.context['request'].user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            user=self.context['request'].user.id,
-            subscription=obj.id
-        ).exists()
+        user = self.context['request'].user
+        return (user.is_authenticated
+                and obj.subscriptions.filter(user=user).exists())
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -79,20 +76,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        if self.context['request'].user.is_anonymous:
-            return False
-        return Favorite.objects.filter(
-            user=self.context['request'].user,
-            recipe=obj.id
-        ).exists()
+        user = self.context['request'].user
+        return (user.is_authenticated
+                and obj.favorites.filter(user=user).exists())
 
     def get_is_in_shopping_cart(self, obj):
-        if self.context['request'].user.is_anonymous:
-            return False
-        return ShoppingCart.objects.filter(
-            user=self.context['request'].user,
-            recipe=obj.id
-        ).exists()
+        user = self.context['request'].user
+        return (user.is_authenticated
+                and obj.shopping_cart.filter(user=user).exists())
 
     def to_representation(self, instance):
         instance = super().to_representation(instance)
@@ -141,16 +132,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        return Favorite.objects.filter(
-            user=self.context['request'].user,
-            recipe=obj.id
-        ).exists()
+        user = self.context['request'].user
+        return (user.is_authenticated
+                and obj.favorites.filter(user=user).exists())
 
     def get_is_in_shopping_cart(self, obj):
-        return ShoppingCart.objects.filter(
-            user=self.context['request'].user,
-            recipe=obj.id
-        ).exists()
+        user = self.context['request'].user
+        return (user.is_authenticated
+                and obj.shopping_cart.filter(user=user).exists())
 
     def validate_tags(self, data):
         tags = self.initial_data['tags']
