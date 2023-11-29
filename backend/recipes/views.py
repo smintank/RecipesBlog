@@ -135,52 +135,67 @@ class ShoppingCartView(FavoriteCartMixin):
 
 
 class DownloadCartView(views.APIView):
-    def get(self, request, *args, **kwargs):
-        pdfmetrics.registerFont(TTFont('Roboto-Regular', 'Roboto-Regular.ttf'))
+    title_font_size = 16
+    text_font_size = 12
+    title_x_y = 230, 800
+    ingredient_y = 760
+    ingredient_x = 70
+    amount_x = 450
+    y_shift = 25
+    file_name = 'groceries.pdf'
 
+    def get(self, request, *args, **kwargs):
         buffer = io.BytesIO()
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="groceries.pdf"'
+
+        response = self._set_settings()
+        ingredient_sum = self._get_ingredients_data()
 
         page = canvas.Canvas(response)
-        page.setFont('Roboto-Regular', 16)
-
-        page.drawString(230, 800, 'Список покупок')
-        page.setFont('Roboto-Regular', 12)
-
-        ingredient_set = RecipeIngredient.objects.values(
-            'ingredient__name', 'amount', 'ingredient__measurement_unit'
-        ).filter(
-            recipe__shopping_cart__user=self.request.user.id
-        ).order_by(
-            'ingredient__name'
-        )
-
-        cur_ingredient = ''
-        ingredient_sum = []
-        for item in ingredient_set:
-            if item['ingredient__name'] != cur_ingredient:
-                cur_ingredient = item['ingredient__name']
-                ingredient_sum.append({
-                    'amount': int(item['amount']),
-                    'name': item['ingredient__name'],
-                    'unit': item['ingredient__measurement_unit']
-                })
-            else:
-                ingredient_sum[-1]['amount'] += int(item['amount'])
-
-        height = 760
-
-        for i, ingredient in enumerate(ingredient_sum):
-            height -= 25
-            amount = ingredient['amount']
-            name = ingredient['name'].capitalize()
-            unit = ingredient['unit']
-            page.drawString(70, height, f'{i+1}. {name}')
-            page.drawString(450, height, f'{amount} {unit}')
-
+        self._fill_page(ingredient_sum, page)
         page.showPage()
         page.save()
 
         buffer.seek(0)
+        return response
+
+    def _fill_page(self, ingredient_sum, page):
+        page.setFont('Roboto-Regular', self.title_font_size)
+        page.drawString(*self.title_x_y, text='Список покупок')
+        page.setFont('Roboto-Regular', self.text_font_size)
+        height = self.ingredient_y
+        for i, ingredient in enumerate(ingredient_sum):
+            height -= self.y_shift
+            name = ingredient['name'].capitalize()
+            page.drawString(self.ingredient_x, height, f'{i + 1}. {name}')
+
+            amount = ingredient['amount']
+            unit = ingredient['unit']
+            page.drawString(self.amount_x, height, f'{amount} {unit}')
+
+    def _get_ingredients_data(self):
+        ingredient_set = RecipeIngredient.objects.values(
+            'ingredient__name', 'amount', 'ingredient__measurement_unit'
+        ).filter(
+            recipe__shopping_cart__user=self.request.user.id
+        ).order_by('ingredient__name')
+
+        current_ingredient = ''
+        ingredient_sum = []
+        for item in ingredient_set:
+            if item['ingredient__name'] != current_ingredient:
+                current_ingredient = item['ingredient__name']
+                ingredient_sum.append({
+                    'amount': int(item['amount']),
+                    'name': item['ingredient__name'],
+                    'unit': item['ingredient__measurement_unit']})
+            else:
+                ingredient_sum[-1]['amount'] += int(item['amount'])
+        return ingredient_sum
+
+    def _set_settings(self):
+        pdfmetrics.registerFont(TTFont('Roboto-Regular', 'Roboto-Regular.ttf'))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; ' \
+                                          f'filename="{self.file_name}"'
+
         return response
