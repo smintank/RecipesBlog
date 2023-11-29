@@ -49,24 +49,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    FILTERS = ('is_favorited', 'is_in_shopping_cart')
+    CHECKED_FILTERS = ('is_favorited', 'is_in_shopping_cart')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def get_serializer_class(self):
-        if self.action in ('create', 'partial_update'):
-            return RecipeCreateSerializer
-        return self.serializer_class
 
     def list(self, request, *args, **kwargs):
         # Так я решил проблему фильтров is_favorited=1, is_in_shopping_cart=1
         # Подменив их значения на 'True' или 'False'
         request.query_params._mutable = True
         for param, value in request.query_params.items():
-            if param in self.FILTERS and value in ('1', '0'):
-                value = str(bool(int(value)))
-                request.query_params[param] = value
+            if param in self.CHECKED_FILTERS and value in ('1', '0'):
+                request.query_params[param] = str(bool(int(value)))
         request.query_params._mutable = False
 
         return super().list(request, *args, **kwargs)

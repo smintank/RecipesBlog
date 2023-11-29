@@ -53,57 +53,6 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RecipeIngredient
-        fields = ('id', 'ingredient', 'amount')
-
-
-class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientSerializer(
-        source='recipe_ingredients', many=True
-    )
-    tags = TagSerializer(many=True)
-    author = UserSerializer(read_only=True)
-    image = Base64ImageField()
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id', 'name', 'text', 'image', 'cooking_time', 'tags',
-            'ingredients', 'author', 'is_favorited', 'is_in_shopping_cart'
-        )
-
-    def get_is_favorited(self, obj):
-        user = self.context['request'].user
-        return (user.is_authenticated
-                and obj.favorites.filter(user=user).exists())
-
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context['request'].user
-        return (user.is_authenticated
-                and obj.shopping_cart.filter(user=user).exists())
-
-    def to_representation(self, instance):
-        instance = super().to_representation(instance)
-        ingredients_data = instance.pop('ingredients')
-        instance['ingredients'] = []
-        for ingredient_data in ingredients_data:
-            ingredient = Ingredient.objects.get(
-                id=ingredient_data['ingredient']
-            )
-            ingredient_set = {
-                'id': ingredient.id,
-                'name': ingredient.name,
-                'measurement_unit': ingredient.measurement_unit,
-                'amount': ingredient_data['amount']
-            }
-            instance['ingredients'].append(OrderedDict(ingredient_set))
-        return instance
-
-
-class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source='ingredient',
         queryset=Ingredient.objects.all(),
@@ -116,8 +65,8 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientCreateSerializer(many=True, allow_empty=False)
+class RecipeSerializer(serializers.ModelSerializer):
+    ingredients = RecipeIngredientSerializer(many=True, allow_empty=False)
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField(read_only=True)
@@ -188,28 +137,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
+        tags = instance.tags.values()
+        ingredients = instance.ingredients.values(
+            'id', 'name', 'measurement_unit',
+            amount=F('recipe_ingredients__amount')
+        )
         instance = super().to_representation(instance)
-        instance['ingredients'].clear()
-        instance['tags'].clear()
-        tags_data = self.validated_data['tags']
-        for tag in tags_data:
-            tag_set = {
-                'id': tag.id,
-                'color': tag.color,
-                'name': tag.name,
-                'slug': tag.slug
-            }
-            instance['tags'].append(OrderedDict(tag_set))
-
-        for ingredient_data in self.validated_data['ingredients']:
-            ingredient = ingredient_data['ingredient']
-            ingredient_set = {
-                'id': ingredient.id,
-                'name': ingredient.name,
-                'measurement_unit': ingredient.measurement_unit,
-                'amount': ingredient_data['amount']
-            }
-            instance['ingredients'].append(OrderedDict(ingredient_set))
+        instance['tags'] = [OrderedDict(tag) for tag in tags]
+        instance['ingredients'] = [
+            OrderedDict(ingredient) for ingredient in ingredients
+        ]
         return instance
 
 
