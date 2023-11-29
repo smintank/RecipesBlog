@@ -224,30 +224,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe'),
-                message='Этот рецепт уже добавлен в избранное',
-            ),
-        ]
-
-    def to_representation(self, instance):
-        instance = super().to_representation(instance)
-        recipe = Recipe.objects.get(id=instance['recipe'])
-        new_data = {'id': recipe.id,
-                    'name': recipe.name,
-                    'cooking_time': recipe.cooking_time,
-                    'image': self.context['request'].build_absolute_uri(
-                        recipe.image.url)
-                    }
-        return new_data
-
-
 class SubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
@@ -296,25 +272,34 @@ class SubscribeSerializer(serializers.ModelSerializer):
         }
 
 
-class ShoppingCartSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorite
+        fields = ('recipe', 'user')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=model.objects.all(),
+                fields=('user', 'recipe'),
+                message='Этот рецепт уже добавлен',
+            ),
+        ]
+
+    def to_representation(self, instance):
+        build_full_url = self.context['request'].build_absolute_uri
+        return {'id': instance.recipe.id,
+                'name': instance.recipe.name,
+                'cooking_time': instance.recipe.cooking_time,
+                'image': build_full_url(instance.recipe.image.url)}
+
+
+class ShoppingCartSerializer(FavoriteSerializer):
     class Meta:
         model = ShoppingCart
         fields = ('recipe', 'user')
         validators = [
             UniqueTogetherValidator(
-                queryset=ShoppingCart.objects.all(),
+                queryset=model.objects.all(),
                 fields=('user', 'recipe'),
-                message='Этот рецепт уже добавлен в корзину',
+                message='Этот рецепт уже добавлен',
             ),
         ]
-
-    def to_representation(self, instance):
-        instance = super().to_representation(instance)
-        recipe = Recipe.objects.get(id=instance['recipe'])
-        new_data = {'id': recipe.id,
-                    'name': recipe.name,
-                    'cooking_time': recipe.cooking_time,
-                    'image': self.context['request'].build_absolute_uri(
-                        recipe.image.url)
-                    }
-        return new_data
