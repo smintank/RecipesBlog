@@ -20,11 +20,13 @@ from recipes.serializer import (
     SubscribeSerializer, ShoppingCartSerializer, RecipeCreateSerializer
 )
 
+UNSUB_ERR_MSG = 'Нельзя отписаться, вы не подписаны!'
+
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name',)
@@ -37,31 +39,6 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_serializer_context(self):
-        context = {'request': self.request}
-        return context
-
-    def create(self, request, *args, **kwargs):
-        request.data['user'] = self.request.user.id
-        request.data['recipe'] = self.kwargs.get('pk')
-        return super().create(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if not (instance := self.queryset.filter(
-                user=self.request.user.id,
-                recipe=get_object_or_404(Recipe, id=self.kwargs.get('pk')))):
-            return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        self.perform_destroy(instance.first())
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
@@ -72,6 +49,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     http_method_names = ['get', 'post', 'patch', 'delete']
 
+    FILTERS = ('is_favorited', 'is_in_shopping_cart')
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -81,13 +60,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def list(self, request, *args, **kwargs):
+        # Так я решил проблему фильтров is_favorited=1, is_in_shopping_cart=1
+        # Подменив их значения на 'True' или 'False'
         request.query_params._mutable = True
         for param, value in request.query_params.items():
-            if (param in ('is_favorited', 'is_in_shopping_cart')
-                    and value in ('1', '0')):
+            if param in self.FILTERS and value in ('1', '0'):
                 value = str(bool(int(value)))
                 request.query_params[param] = value
         request.query_params._mutable = False
+
         return super().list(request, *args, **kwargs)
 
 
@@ -95,8 +76,8 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Subscription.objects.all()
     serializer_class = SubscribeSerializer
     pagination_class = LimitOffsetPagination
-    permission_classes = (IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
+    permission_classes = (IsAuthenticated,)
 
     def create(self, request, *args, **kwargs):
         request.data['user'] = self.request.user.id
@@ -106,11 +87,12 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         subscription = get_object_or_404(User, id=self.kwargs.get('pk')).id
-        if not (instance := self.queryset.filter(
-                user=self.request.user.id, subscription=subscription)):
-            return Response({'error': 'Нельзя отписаться, вы не подписаны!'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
+        instance = self.queryset.filter(
+            user=self.request.user.id, subscription=subscription
+        )
+        if not instance:
+            return Response(
+                {'error': UNSUB_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -123,9 +105,7 @@ class SubscriptionListView(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend,)
 
 
-class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
-    queryset = ShoppingCart.objects.all()
-    serializer_class = ShoppingCartSerializer
+class FavoriteCartMixin(generics.CreateAPIView, generics.DestroyAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_context(self):
@@ -138,15 +118,26 @@ class ShoppingCartView(generics.CreateAPIView, generics.DestroyAPIView):
         return super().create(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if not (instance := self.queryset.filter(
-                user=self.request.user.id,
-                recipe=get_object_or_404(Recipe, id=self.kwargs.get('pk')))):
+        recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
+        instance = self.queryset.filter(
+                user=self.request.user.id, recipe=recipe
+        )
+        if not instance:
             return Response(
-                {'error': 'Этого рецепта итак нет в вашей корзине!'},
-                status=status.HTTP_400_BAD_REQUEST)
-
+                {'error': UNSUB_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST
+            )
         self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FavoriteView(FavoriteCartMixin):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+
+
+class ShoppingCartView(FavoriteCartMixin):
+    queryset = ShoppingCart.objects.all()
+    serializer_class = ShoppingCartSerializer
 
 
 class DownloadCartView(views.APIView):
