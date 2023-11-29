@@ -1,7 +1,7 @@
 from itertools import islice
 from collections import OrderedDict
 from django.core.files.base import ContentFile
-from django.forms.models import model_to_dict
+from django.db.models import F
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -170,31 +170,29 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        instance = super().to_representation(instance)
         request = self.context['request']
-
-        user = User.objects.prefetch_related('recipes').get(
-            id=instance['subscription'], subscriptions__user=instance['user']
-        )
-
         if recipe_limit := request.query_params.get('recipes_limit'):
             recipe_limit = int(recipe_limit)
 
+        recipes = instance.subscription.recipes
         recipe_set = []
-        for recipe in islice(user.recipes.all(), recipe_limit):
-            result = model_to_dict(
-                recipe, fields=['id', 'name', 'cooking_time']
-            )
-            result['image'] = request.build_absolute_uri(recipe.image.url)
-            recipe_set.append(result)
+        for recipe in islice(recipes.all(), recipe_limit):
+            recipe_set.append({
+                'id': recipe.id,
+                'name': recipe.name,
+                'cooking_time': recipe.cooking_time,
+                'image': request.build_absolute_uri(recipe.image.url)
+            })
 
         return {
-            **model_to_dict(user, fields=[
-                'id', 'username', 'first_name', 'last_name', 'email'
-            ]),
+            'id': instance.subscription.id,
+            'username': instance.subscription.username,
+            'first_name': instance.subscription.first_name,
+            'last_name': instance.subscription.last_name,
+            'email': instance.subscription.email,
             'is_subscribed': True,
             'recipes': recipe_set,
-            'recipes_count': user.recipes.count()
+            'recipes_count': recipes.count()
         }
 
 

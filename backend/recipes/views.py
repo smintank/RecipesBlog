@@ -17,7 +17,7 @@ from recipes.models import (Recipe, Ingredient, Favorite, Tag, Subscription,
                             ShoppingCart, User, RecipeIngredient)
 from recipes.serializer import (
     RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
-    SubscribeSerializer, ShoppingCartSerializer, RecipeCreateSerializer
+    SubscribeSerializer, ShoppingCartSerializer
 )
 
 UNSUB_ERR_MSG = 'Нельзя отписаться, вы не подписаны!'
@@ -66,6 +66,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class SubscriptionListView(generics.ListAPIView):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscribeSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthenticated,)
+    filter_backends = (DjangoFilterBackend,)
+
+
 class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Subscription.objects.all()
     serializer_class = SubscribeSerializer
@@ -91,15 +99,9 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscriptionListView(generics.ListAPIView):
-    queryset = Subscription.objects.all()
-    serializer_class = SubscribeSerializer
-    pagination_class = LimitOffsetPagination
-    permission_classes = (IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-
-
-class FavoriteCartMixin(generics.CreateAPIView, generics.DestroyAPIView):
+class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_context(self):
@@ -124,12 +126,7 @@ class FavoriteCartMixin(generics.CreateAPIView, generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class FavoriteView(FavoriteCartMixin):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-
-
-class ShoppingCartView(FavoriteCartMixin):
+class ShoppingCartView(FavoriteView):
     queryset = ShoppingCart.objects.all()
     serializer_class = ShoppingCartSerializer
 
