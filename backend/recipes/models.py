@@ -148,9 +148,6 @@ class Favorite(models.Model):
             name='user_recipe_favorite'
         )
 
-    def __str__(self):
-        return f'Рецепт "{self.recipe}" в избранном у {self.user}'
-
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
@@ -165,15 +162,12 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
-        verbose_name = 'товар'
-        verbose_name_plural = 'Товары'
+        verbose_name = 'продукт'
+        verbose_name_plural = 'Продукты'
         models.UniqueConstraint(
             fields=['user', 'recipe'],
             name='user_recipe_shopping_cart'
         )
-
-    def __str__(self):
-        return f'Рецепт "{self.recipe}" в корзине у {self.user}'
 
 
 class Subscription(models.Model):
@@ -195,6 +189,3 @@ class Subscription(models.Model):
             fields=['user', 'subscription'],
             name='user_user_subscription'
         )
-
-    def __str__(self):
-        return f'{self.user} подписан на {self.subscription}'
