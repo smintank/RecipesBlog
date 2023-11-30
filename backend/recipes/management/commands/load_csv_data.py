@@ -5,7 +5,6 @@ from django.core.management import BaseCommand
 from foodgram import settings
 from recipes.models import Ingredient
 
-
 MODEL_FILE_MAPPING = {
     Ingredient: 'ingredients.csv'
 }

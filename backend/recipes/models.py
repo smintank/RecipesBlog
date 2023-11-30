@@ -1,6 +1,6 @@
+from colorfield.fields import ColorField
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from colorfield.fields import ColorField
 
 
 class User(AbstractUser):

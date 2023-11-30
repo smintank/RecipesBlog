@@ -1,8 +1,9 @@
 import csv
+
 from django.core.management import BaseCommand
 
 from foodgram import settings
-from recipes.models import User, Tag, Recipe
+from recipes.models import Recipe, Tag, User
 
 MODEL_FILE_MAPPING = {
     User: 'users.csv',

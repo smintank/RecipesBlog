@@ -1,24 +1,24 @@
+import io
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, views, status, generics
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
-import io
-from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import generics, status, views, viewsets
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
 
 from recipes.filters import RecipeFilter
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Subscription, Tag, User)
 from recipes.permissions import IsAuthorOrReadOnly
-from recipes.models import (Recipe, Ingredient, Favorite, Tag, Subscription,
-                            ShoppingCart, User, RecipeIngredient)
-from recipes.serializer import (
-    RecipeSerializer, IngredientSerializer, FavoriteSerializer, TagSerializer,
-    SubscribeSerializer, ShoppingCartSerializer
-)
+from recipes.serializer import (FavoriteSerializer, IngredientSerializer,
+                                RecipeSerializer, ShoppingCartSerializer,
+                                SubscribeSerializer, TagSerializer)
 
 UNSUB_ERR_MSG = 'Нельзя отписаться, вы не подписаны!'
 

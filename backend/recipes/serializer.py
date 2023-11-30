@@ -1,14 +1,15 @@
 from base64 import b64decode
 from collections import OrderedDict
+from itertools import islice
+
 from django.core.files.base import ContentFile
 from django.db.models import F
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from itertools import islice
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import (Ingredient, RecipeIngredient, Tag, Recipe,
-                            Subscription, Favorite, User, ShoppingCart)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Subscription, Tag, User)
 
 
 class Base64ImageField(serializers.ImageField):

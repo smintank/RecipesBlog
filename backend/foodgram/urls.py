@@ -1,12 +1,12 @@
-from django.contrib import admin
-from django.urls import path, include
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 from rest_framework import routers
 
 from foodgram import settings
-from recipes.views import (RecipeViewSet, IngredientViewSet, FavoriteView,
-                           TagViewSet, SubscribeView, SubscriptionListView,
-                           ShoppingCartView, DownloadCartView)
+from recipes.views import (DownloadCartView, FavoriteView, IngredientViewSet,
+                           RecipeViewSet, ShoppingCartView, SubscribeView,
+                           SubscriptionListView, TagViewSet)
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
