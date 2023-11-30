@@ -120,18 +120,9 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "infra/docker-compose.yml, infra/nginx.conf"
+        source: "infra/docker-compose.yml"
         target: "foodgram/"
         strip_components: 1
-    - name: Copy docs via ssh
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "docs/"
-        target: "foodgram/"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:

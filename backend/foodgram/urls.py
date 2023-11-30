@@ -23,7 +23,6 @@ urlpatterns = [
     path('api/recipes/<int:pk>/shopping_cart/', ShoppingCartView.as_view()),
     path('api/recipes/download_shopping_cart/', DownloadCartView.as_view()),
     path('api/', include(router.urls)),
-
 ]
 
 
