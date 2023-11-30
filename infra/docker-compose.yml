@@ -23,9 +23,7 @@ services:
       - frontend
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: smintank/foodgram_frontend
     env_file: ../.env
     volumes:
       - static:/app/build/
