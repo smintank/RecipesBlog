@@ -13,9 +13,7 @@ services:
     env_file: ../.env
 
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: smintank/foodgram_backend
     env_file: ../.env
     volumes:
       - static:/app/backend_static/
