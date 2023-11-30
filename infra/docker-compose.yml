@@ -10,12 +10,12 @@ services:
     image: postgres:13.10
     volumes:
       - pg_data:/var/lib/postgresql/data/
-    env_file: ../.env
+    env_file: .env
     restart: always
 
   backend:
     image: smintank/foodgram_backend
-    env_file: ../.env
+    env_file: .env
     volumes:
       - static:/app/backend_static/
       - media:/app/media/
@@ -26,14 +26,14 @@ services:
 
   frontend:
     image: smintank/foodgram_frontend
-    env_file: ../.env
+    env_file: .env
     volumes:
       - static:/app/build/
     restart: no
 
   nginx:
     image: smintank/foodgram_gateway
-    env_file: ../.env
+    env_file: .env
     ports:
       - ${NGINX_HOST_PORT}:80
     volumes:
