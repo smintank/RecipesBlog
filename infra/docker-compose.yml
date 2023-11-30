@@ -11,6 +11,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data/
     env_file: ../.env
+    restart: always
 
   backend:
     image: smintank/foodgram_backend
@@ -21,23 +22,26 @@ services:
     depends_on:
       - db
       - frontend
+    restart: always
 
   frontend:
     image: smintank/foodgram_frontend
     env_file: ../.env
     volumes:
       - static:/app/build/
+    restart: no
 
   nginx:
     image: nginx:1.19.3
     env_file: ../.env
     ports:
-      - "8080:80"
+      - ${NGINX_HOST_PORT}:80
     volumes:
       - media:/media/
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - static:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
+    restart: always
 
