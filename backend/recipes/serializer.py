@@ -4,7 +4,6 @@ from django.core.files.base import ContentFile
 from django.db.models import F
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
 import base64
 import djoser.serializers
 
@@ -122,7 +121,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         try:
             ingredients_data = validated_data.pop('ingredients')
         except Exception:
-            raise serializers.ValidationError('ingredients - обязательное поле')
+            raise serializers.ValidationError(
+                'ingredients - обязательное поле'
+            )
 
         for ingredient_data in ingredients_data:
             RecipeIngredient.objects.get_or_create(recipe=instance,

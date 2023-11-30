@@ -116,7 +116,7 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
         instance = self.queryset.filter(
-                user=self.request.user.id, recipe=recipe
+            user=self.request.user.id, recipe=recipe
         )
         if not instance:
             return Response(

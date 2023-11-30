@@ -4,7 +4,6 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from foodgram import settings
-
 from recipes.views import (RecipeViewSet, IngredientViewSet, FavoriteView,
                            TagViewSet, SubscribeView, SubscriptionListView,
                            ShoppingCartView, DownloadCartView)
@@ -29,4 +28,6 @@ urlpatterns = [
 
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+    )
