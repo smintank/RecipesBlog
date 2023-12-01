@@ -29,3 +29,10 @@ class RecipeFilter(FilterSet):
         if value and self.request.user.is_authenticated:
             return queryset.filter(shopping_cart__user=self.request.user)
         return queryset
+
+
+class IngredientFilter(FilterSet):
+    name = CharFilter(method='get_name')
+
+    def get_name(self, queryset, name, value):
+        return queryset.filter(name__icontains=value)
