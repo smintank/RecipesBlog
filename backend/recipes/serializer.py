@@ -5,14 +5,18 @@ from itertools import islice
 from django.core.files.base import ContentFile
 from django.db.models import F
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from rest_framework import serializers
+from rest_framework.serializers import (ImageField, IntegerField,
+                                        ModelSerializer,
+                                        PrimaryKeyRelatedField,
+                                        SerializerMethodField,
+                                        ValidationError)
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Subscription, Tag, User)
 
 
-class Base64ImageField(serializers.ImageField):
+class Base64ImageField(ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -21,7 +25,7 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
         fields = (
@@ -31,7 +35,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(DjoserUserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = SerializerMethodField()
 
     class Meta:
         model = User
@@ -46,32 +50,32 @@ class UserSerializer(DjoserUserSerializer):
                 and obj.subscriptions.filter(user=user).exists())
 
 
-class IngredientSerializer(serializers.ModelSerializer):
+class IngredientSerializer(ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(
+class RecipeIngredientSerializer(ModelSerializer):
+    id = PrimaryKeyRelatedField(
         source='ingredient',
         queryset=Ingredient.objects.all(),
         write_only=True
     )
-    amount = serializers.IntegerField(min_value=1, write_only=True)
+    amount = IntegerField(min_value=1, write_only=True)
 
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeSerializer(ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True, allow_empty=False)
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
-    cooking_time = serializers.IntegerField(min_value=1, max_value=600)
+    is_favorited = SerializerMethodField(read_only=True)
+    is_in_shopping_cart = SerializerMethodField(read_only=True)
+    cooking_time = IntegerField(min_value=1, max_value=600)
 
     class Meta:
         model = Recipe
@@ -93,8 +97,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate_tags(self, data):
         tags = self.initial_data['tags']
         if len(set(tags)) != len(tags):
-            raise serializers.ValidationError(
-                'Рецепт не может содержать повторяющиеся теги'
+            raise ValidationError(
+                {'tags': ['Значения не должны повторяться']}
             )
         return data
 
@@ -102,8 +106,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = self.initial_data['ingredients']
         ingredient_set = [ingredient['id'] for ingredient in ingredients]
         if len(set(ingredient_set)) != len(ingredient_set):
-            raise serializers.ValidationError(
-                'Рецепт не может содержать повторяющиеся ингредиенты'
+            raise ValidationError(
+                {'ingredients': ['Значения не должны повторяться']}
             )
         return data
 
@@ -152,7 +156,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
+class SubscribeSerializer(ModelSerializer):
     class Meta:
         model = Subscription
         fields = ('user', 'subscription')
@@ -166,9 +170,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['user'] == data['subscription']:
-            raise serializers.ValidationError(
-                'Вы не можете быть подписаны на себя'
-            )
+            raise ValidationError('Вы не можете быть подписаны на себя')
         return data
 
     def to_representation(self, instance):
@@ -198,7 +200,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
         }
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(ModelSerializer):
     class Meta:
         model = Favorite
         fields = ('recipe', 'user')

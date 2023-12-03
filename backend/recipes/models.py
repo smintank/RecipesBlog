@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-
 MAX_STANDARD_FIELD_LENGTH = 200
 MIN_COOKING_TIME = 1
 MAX_COOKING_TIME = 600
@@ -37,7 +36,7 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        ordering = ('name', )
+        ordering = ('name',)
         verbose_name = 'ингридиент'
         verbose_name_plural = 'Ингридиенты'
 
@@ -104,14 +103,8 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления',
-        validators=[
-            MinValueValidator(
-                MIN_COOKING_TIME,
-                message='Значение меньше чем минимально допустимое'),
-            MaxValueValidator(
-                MAX_COOKING_TIME,
-                message='Значение больше чем максимально допустимое')]
-    )
+        validators=[MinValueValidator(MIN_COOKING_TIME),
+                    MaxValueValidator(MAX_COOKING_TIME)])
     pub_date = models.DateTimeField(
         verbose_name='Дата создания',
         auto_now_add=True
