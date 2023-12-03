@@ -1,5 +1,6 @@
 from colorfield.fields import ColorField
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -102,7 +103,14 @@ class Recipe(models.Model):
         related_name='recipe_favorite'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        verbose_name='Время приготовления'
+        verbose_name='Время приготовления',
+        validators=[
+            MinValueValidator(
+                MIN_COOKING_TIME,
+                message='Значение меньше чем минимально допустимое'),
+            MaxValueValidator(
+                MAX_COOKING_TIME,
+                message='Значение больше чем максимально допустимое')]
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата создания',
