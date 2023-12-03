@@ -105,25 +105,15 @@ class RecipeSerializer(ModelSerializer):
 
     def update(self, instance, validated_data):
         if not validated_data.get('tags'):
-            raise serializers.ValidationError('tags - обязательное поле')
-        try:
-            ingredients_data = validated_data.pop('ingredients')
-        except Exception:
-            raise serializers.ValidationError(
-                'ingredients - обязательное поле'
-            )
+            raise ValidationError({'tags': ['Обязательное поле']})
+        if not validated_data.get('ingredients'):
+            raise ValidationError({'ingredients': ['Обязательное поле']})
 
-        for ingredient_data in ingredients_data:
-            RecipeIngredient.objects.get_or_create(recipe=instance,
-                                                   **ingredient_data)
-        instance.text = validated_data.get('text', instance.text)
-        instance.name = validated_data.get('name', instance.name)
-        instance.image = validated_data.get('image', instance.image)
-        instance.tags.set(validated_data.get('tags', instance.tags))
-        instance.cooking_time = validated_data.get('cooking_time',
-                                                   instance.cooking_time)
-        instance.save()
-        return instance
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        for ingredient in validated_data.pop('ingredients'):
+            RecipeIngredient.objects.create(recipe=instance, **ingredient)
+
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         tags = instance.tags.values()
