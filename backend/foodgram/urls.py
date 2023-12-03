@@ -5,8 +5,8 @@ from rest_framework import routers
 
 from foodgram import settings
 from recipes.views import (DownloadCartView, FavoriteView, IngredientViewSet,
-                           RecipeViewSet, ShoppingCartView, SubscribeView,
-                           SubscriptionListView, TagViewSet)
+                           RecipeViewSet, ShoppingCartView, TagViewSet)
+from users.views import SubscriptionListView, SubscribeView
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)

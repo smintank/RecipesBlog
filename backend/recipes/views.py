@@ -16,13 +16,12 @@ from rest_framework.response import Response
 
 from recipes.filters import IngredientFilter, RecipeFilter
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Subscription, Tag, User)
+                            ShoppingCart, Tag)
 from recipes.permissions import IsAuthorOrReadOnly
 from recipes.serializer import (FavoriteSerializer, IngredientSerializer,
                                 RecipeSerializer, ShoppingCartSerializer,
-                                SubscribeSerializer, TagSerializer)
-
-UNSUB_ERR_MSG = 'Нельзя отписаться, вы не подписаны!'
+                                TagSerializer)
+from users.views import UNSUB_ERR_MSG
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,38 +52,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-
-class SubscriptionListView(generics.ListAPIView):
-    queryset = Subscription.objects.all()
-    serializer_class = SubscribeSerializer
-    pagination_class = LimitOffsetPagination
-    permission_classes = (IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-
-
-class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
-    queryset = Subscription.objects.all()
-    serializer_class = SubscribeSerializer
-    pagination_class = LimitOffsetPagination
-    filter_backends = (DjangoFilterBackend,)
-    permission_classes = (IsAuthenticated,)
-
-    def create(self, request, *args, **kwargs):
-        request.data['user'] = self.request.user.id
-        request.data['subscription'] = get_object_or_404(
-            User, id=self.kwargs.get('pk')).id
-        return super().create(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        subscription = get_object_or_404(User, id=self.kwargs.get('pk')).id
-        instance = self.queryset.filter(user=request.user.id,
-                                        subscription=subscription)
-        if not instance:
-            return Response({'error': UNSUB_ERR_MSG},
-                            status=status.HTTP_400_BAD_REQUEST)
-        self.perform_destroy(instance.first())
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):

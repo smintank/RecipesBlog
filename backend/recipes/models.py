@@ -3,26 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from users.models import User
+
 MAX_STANDARD_FIELD_LENGTH = 200
 MIN_COOKING_TIME = 1
 MAX_COOKING_TIME = 600
-
-
-class User(AbstractUser):
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
-
-    email = models.EmailField(unique=True)
-    first_name = models.CharField(blank=False, max_length=150)
-    last_name = models.CharField(blank=False, max_length=150)
-
-    class Meta:
-        ordering = ('username',)
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-
-    def __str__(self):
-        return self.username
 
 
 class Ingredient(models.Model):
@@ -181,23 +166,3 @@ class ShoppingCart(models.Model):
         )
 
 
-class Subscription(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE,
-        related_name='subscribers',
-        verbose_name='Подписчик',
-    )
-    subscription = models.ForeignKey(
-        User, on_delete=models.CASCADE,
-        related_name='subscriptions',
-        verbose_name='Подписан на'
-    )
-
-    class Meta:
-        ordering = ('user', 'subscription')
-        verbose_name = 'подписка'
-        verbose_name_plural = 'Подписки'
-        models.UniqueConstraint(
-            fields=['user', 'subscription'],
-            name='user_user_subscription'
-        )

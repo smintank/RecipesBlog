@@ -1,10 +1,8 @@
 from base64 import b64decode
 from collections import OrderedDict
-from itertools import islice
 
 from django.core.files.base import ContentFile
 from django.db.models import F
-from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework.serializers import (ImageField, IntegerField,
                                         ModelSerializer,
                                         PrimaryKeyRelatedField,
@@ -13,7 +11,8 @@ from rest_framework.serializers import (ImageField, IntegerField,
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Subscription, Tag, User)
+                            ShoppingCart, Tag)
+from users.serializer import UserSerializer
 
 
 class Base64ImageField(ImageField):
@@ -32,22 +31,6 @@ class TagSerializer(ModelSerializer):
             'id', 'name', 'color', 'slug'
         )
         read_only_fields = ('id',)
-
-
-class UserSerializer(DjoserUserSerializer):
-    is_subscribed = SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = (
-            'id', 'username', 'first_name', 'last_name',
-            'email', 'is_subscribed'
-        )
-
-    def get_is_subscribed(self, obj):
-        user = self.context['request'].user
-        return (user.is_authenticated
-                and obj.subscriptions.filter(user=user).exists())
 
 
 class IngredientSerializer(ModelSerializer):
@@ -154,50 +137,6 @@ class RecipeSerializer(ModelSerializer):
             OrderedDict(ingredient) for ingredient in ingredients
         ]
         return instance
-
-
-class SubscribeSerializer(ModelSerializer):
-    class Meta:
-        model = Subscription
-        fields = ('user', 'subscription')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Subscription.objects.all(),
-                fields=('user', 'subscription'),
-                message='Вы уже подписаны на этого пользователя',
-            ),
-        ]
-
-    def validate(self, data):
-        if data['user'] == data['subscription']:
-            raise ValidationError('Вы не можете быть подписаны на себя')
-        return data
-
-    def to_representation(self, instance):
-        request = self.context['request']
-        if recipe_limit := request.query_params.get('recipes_limit'):
-            recipe_limit = int(recipe_limit)
-
-        recipes = instance.subscription.recipes
-        recipe_set = []
-        for recipe in islice(recipes.all(), recipe_limit):
-            recipe_set.append({
-                'id': recipe.id,
-                'name': recipe.name,
-                'cooking_time': recipe.cooking_time,
-                'image': request.build_absolute_uri(recipe.image.url)
-            })
-
-        return {
-            'id': instance.subscription.id,
-            'username': instance.subscription.username,
-            'first_name': instance.subscription.first_name,
-            'last_name': instance.subscription.last_name,
-            'email': instance.subscription.email,
-            'is_subscribed': True,
-            'recipes': recipe_set,
-            'recipes_count': recipes.count()
-        }
 
 
 class FavoriteSerializer(ModelSerializer):

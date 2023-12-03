@@ -1,9 +1,8 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 from django.db.models import Count
 
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Subscription, Tag, User)
+                            ShoppingCart, Tag)
 
 
 class RecipeIngredientInline(admin.TabularInline):
@@ -39,19 +38,11 @@ class RecipeAdmin(admin.ModelAdmin):
     favorite_count.admin_order_field = '_favorite_count'
 
 
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'subscription')
-
-
 class IngredientsAdmin(admin.ModelAdmin):
     inlines = [RecipeIngredientInline]
     list_display = ('name', 'measurement_unit')
     list_filter = ('name',)
     search_fields = ('name',)
-
-
-class MyUserAdmin(UserAdmin):
-    list_filter = ('email', 'username', 'is_superuser', 'is_active')
 
 
 class ShoppingCartAdmin(admin.ModelAdmin):
@@ -71,6 +62,3 @@ admin.site.register(Ingredient, IngredientsAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
 admin.site.register(Tag)
-
-admin.site.register(User, MyUserAdmin)
-admin.site.register(Subscription, SubscriptionAdmin)

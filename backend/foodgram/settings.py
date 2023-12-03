@@ -17,6 +17,7 @@ DEBUG = bool(int(os.getenv("DEBUG", default=0)))
 ALLOWED_HOSTS = str(os.getenv('ALLOWED_HOSTS')).split(' ')
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -116,7 +117,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'recipes.User'
+AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -136,11 +137,11 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'PERMISSIONS': {
-        'user': ['recipes.permissions.ReadOnlyOrNotMePath'],
+        'user': ['users.permissions.ReadOnlyOrNotMePath'],
         'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
     'SERIALIZERS': {
-        'user': 'recipes.serializer.UserSerializer',
-        'current_user': 'recipes.serializer.UserSerializer',
+        'user': 'users.serializer.UserSerializer',
+        'current_user': 'users.serializer.UserSerializer',
     }
 }
