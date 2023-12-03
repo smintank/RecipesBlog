@@ -78,12 +78,11 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         subscription = get_object_or_404(User, id=self.kwargs.get('pk')).id
-        instance = self.queryset.filter(
-            user=self.request.user.id, subscription=subscription
-        )
+        instance = self.queryset.filter(user=request.user.id,
+                                        subscription=subscription)
         if not instance:
-            return Response(
-                {'error': UNSUB_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': UNSUB_ERR_MSG},
+                            status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -104,13 +103,10 @@ class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
-        instance = self.queryset.filter(
-            user=self.request.user.id, recipe=recipe
-        )
+        instance = self.queryset.filter(user=request.user, recipe=recipe)
         if not instance:
-            return Response(
-                {'error': UNSUB_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': UNSUB_ERR_MSG},
+                            status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
