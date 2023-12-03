@@ -3,6 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
+MAX_STANDARD_FIELD_LENGTH = 200
+MIN_COOKING_TIME = 1
+MAX_COOKING_TIME = 600
+
+
 class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
@@ -12,6 +17,7 @@ class User(AbstractUser):
     last_name = models.CharField(blank=False, max_length=150)
 
     class Meta:
+        ordering = ('username',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
@@ -21,15 +27,16 @@ class User(AbstractUser):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=200,
+        max_length=MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=200,
+        max_length=MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Единица измерения'
     )
 
     class Meta:
+        ordering = ('name', )
         verbose_name = 'ингридиент'
         verbose_name_plural = 'Ингридиенты'
 
@@ -39,7 +46,7 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=200,
+        max_length=MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Имя',
         unique=True
     )
@@ -48,11 +55,12 @@ class Tag(models.Model):
         unique=True
     )
     slug = models.SlugField(
-        max_length=200,
+        max_length=MAX_STANDARD_FIELD_LENGTH,
         unique=True
     )
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'тег'
         verbose_name_plural = 'Теги'
 
@@ -62,7 +70,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     name = models.CharField(
-        max_length=200,
+        max_length=MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Название',
     )
     author = models.ForeignKey(
@@ -141,6 +149,7 @@ class Favorite(models.Model):
     )
 
     class Meta:
+        ordering = ('user', 'recipe')
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранные'
         models.UniqueConstraint(
@@ -162,6 +171,7 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
+        ordering = ('user', 'recipe')
         verbose_name = 'продукт'
         verbose_name_plural = 'Продукты'
         models.UniqueConstraint(
@@ -183,6 +193,7 @@ class Subscription(models.Model):
     )
 
     class Meta:
+        ordering = ('user', 'subscription')
         verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
         models.UniqueConstraint(
