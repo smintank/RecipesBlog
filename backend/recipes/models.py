@@ -118,6 +118,9 @@ class RecipeIngredient(models.Model):
         verbose_name='Количество'
     )
 
+    class Meta:
+        ordering = ('id',)
+
 
 class Favorite(models.Model):
     user = models.ForeignKey(
