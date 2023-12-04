@@ -10,13 +10,10 @@ from rest_framework.serializers import (CharField, ImageField, IntegerField,
                                         ValidationError)
 from rest_framework.validators import UniqueTogetherValidator
 
+from recipes.constants import Messages
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.serializer import UserSerializer
-
-ALREADY_EXISTING_ERR_MSG = 'Этот рецепт уже добавлен'
-REQUIRED_FIELD_ERR_MSG = 'Обязательное поле'
-NOT_UNIQUE_ERR_MSG = 'Значения не должны повторяться'
 
 
 class Base64ImageField(ImageField):
@@ -88,7 +85,7 @@ class RecipeSerializer(ModelSerializer):
         tags = self.initial_data['tags']
         if len(set(tags)) != len(tags):
             raise ValidationError(
-                {'tags': [NOT_UNIQUE_ERR_MSG]}
+                {'tags': [Messages.NOT_UNIQUE_ERROR]}
             )
         return data
 
@@ -97,7 +94,7 @@ class RecipeSerializer(ModelSerializer):
         ingredient_set = [ingredient['id'] for ingredient in ingredients]
         if len(set(ingredient_set)) != len(ingredient_set):
             raise ValidationError(
-                {'ingredients': [NOT_UNIQUE_ERR_MSG]}
+                {'ingredients': [Messages.NOT_UNIQUE_ERROR]}
             )
         return data
 
@@ -112,10 +109,11 @@ class RecipeSerializer(ModelSerializer):
 
     def update(self, instance, validated_data):
         if not validated_data.get('tags'):
-            raise ValidationError({'tags': [REQUIRED_FIELD_ERR_MSG]})
+            raise ValidationError({'tags': [Messages.REQUIRED_FIELD_ERROR]})
         if not validated_data.get('ingredients'):
-            raise ValidationError({'ingredients': [REQUIRED_FIELD_ERR_MSG]})
-
+            raise ValidationError(
+                {'ingredients': [Messages.REQUIRED_FIELD_ERROR]}
+            )
         RecipeIngredient.objects.filter(recipe=instance).delete()
         for ingredient in validated_data.pop('ingredients'):
             RecipeIngredient.objects.create(recipe=instance, **ingredient)
@@ -152,7 +150,7 @@ class FavoriteSerializer(ModelSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=('user', 'recipe'),
-                message=ALREADY_EXISTING_ERR_MSG,
+                message=Messages.ALREADY_EXISTING_ERROR,
             ),
         ]
 
@@ -164,6 +162,6 @@ class ShoppingCartSerializer(FavoriteSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=('user', 'recipe'),
-                message=ALREADY_EXISTING_ERR_MSG,
+                message=Messages.ALREADY_EXISTING_ERROR,
             ),
         ]

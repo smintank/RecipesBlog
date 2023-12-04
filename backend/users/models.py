@@ -1,14 +1,18 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from recipes.constants import MAX_USER_FIELDS_LENGTH
+
 
 class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     email = models.EmailField(unique=True)
-    first_name = models.CharField(blank=False, max_length=150)
-    last_name = models.CharField(blank=False, max_length=150)
+    first_name = models.CharField(max_length=MAX_USER_FIELDS_LENGTH,
+                                  blank=False)
+    last_name = models.CharField(max_length=MAX_USER_FIELDS_LENGTH,
+                                 blank=False)
 
     class Meta:
         ordering = ('username',)

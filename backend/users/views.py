@@ -5,10 +5,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from users.serializer import SubscribeSerializer
+from recipes.constants import Messages
 from users.models import Subscription, User
-
-NOT_EXISTING_ERR_MSG = 'Нельзя отписаться, вы не подписаны!'
+from users.serializer import SubscribeSerializer
 
 
 class SubscriptionListView(generics.ListAPIView):
@@ -37,7 +36,7 @@ class SubscribeView(generics.CreateAPIView, generics.DestroyAPIView):
         instance = self.queryset.filter(user=request.user.id,
                                         subscription=subscription)
         if not instance:
-            return Response({'error': NOT_EXISTING_ERR_MSG},
+            return Response({'error': Messages.NOT_EXISTING_ERROR},
                             status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance.first())
         return Response(status=status.HTTP_204_NO_CONTENT)

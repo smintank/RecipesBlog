@@ -3,11 +3,9 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from recipes.constants import (MAX_COOKING_TIME, MAX_STANDARD_FIELD_LENGTH,
+                               MIN_COOKING_TIME)
 from users.models import User
-
-MAX_STANDARD_FIELD_LENGTH = 200
-MIN_COOKING_TIME = 1
-MAX_COOKING_TIME = 600
 
 
 class Ingredient(models.Model):

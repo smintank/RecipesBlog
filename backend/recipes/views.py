@@ -15,6 +15,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
+from recipes.constants import Messages
 from recipes.filters import IngredientFilter, RecipeFilter
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
@@ -22,7 +23,6 @@ from recipes.permissions import IsAuthorOrReadOnly
 from recipes.serializer import (FavoriteSerializer, IngredientSerializer,
                                 RecipeSerializer, ShoppingCartSerializer,
                                 TagSerializer)
-from users.views import NOT_EXISTING_ERR_MSG
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -75,7 +75,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe = get_object_or_404(Recipe, id=pk)
             instance = self.queryset.filter(user=request.user, recipe=recipe)
             if not instance:
-                return Response({'error': NOT_EXISTING_ERR_MSG},
+                return Response({'error': Messages.NOT_EXISTING_ERROR},
                                 status=status.HTTP_400_BAD_REQUEST)
             self.perform_destroy(instance.first())
             return Response(status=status.HTTP_204_NO_CONTENT)
