@@ -1,5 +1,4 @@
 from colorfield.fields import ColorField
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -162,5 +161,3 @@ class ShoppingCart(models.Model):
             fields=['user', 'recipe'],
             name='user_recipe_shopping_cart'
         )
-
-

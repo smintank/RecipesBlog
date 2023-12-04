@@ -6,8 +6,7 @@ from django.db.models import F
 from rest_framework.serializers import (CharField, ImageField, IntegerField,
                                         ModelSerializer,
                                         PrimaryKeyRelatedField,
-                                        SerializerMethodField,
-                                        ValidationError)
+                                        SerializerMethodField, ValidationError)
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.constants import Messages

@@ -1,6 +1,6 @@
 import io
 
-from django.db.models import IntegerField, F
+from django.db.models import F, IntegerField
 from django.db.models.functions import Cast
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404

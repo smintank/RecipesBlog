@@ -6,7 +6,7 @@ from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueTogetherValidator
 
-from users.models import User, Subscription
+from users.models import Subscription, User
 
 
 class UserSerializer(DjoserUserSerializer):

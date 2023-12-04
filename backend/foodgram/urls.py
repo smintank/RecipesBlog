@@ -4,9 +4,9 @@ from django.urls import include, path
 from rest_framework import routers
 
 from foodgram import settings
-from recipes.views import (DownloadCartView, IngredientViewSet,
-                           RecipeViewSet, TagViewSet)
-from users.views import SubscriptionListView, SubscribeView
+from recipes.views import (DownloadCartView, IngredientViewSet, RecipeViewSet,
+                           TagViewSet)
+from users.views import SubscribeView, SubscriptionListView
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
