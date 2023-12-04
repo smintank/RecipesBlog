@@ -91,7 +91,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class DownloadCartView(views.APIView):
-    SETTINGS = {
+    PDF_SETTINGS = {
         'file_name': 'groceries.pdf',
         'title_text': 'Список покупок',
         'title_x_y': (230, 800),
@@ -108,15 +108,15 @@ class DownloadCartView(views.APIView):
     def get(self, request, *args, **kwargs):
         buffer = io.BytesIO()
         response = self._set_settings(
-            filename=self.SETTINGS['file_name'],
-            font=self.SETTINGS['font'],
-            font_path=self.SETTINGS['font_path']
+            filename=self.PDF_SETTINGS['file_name'],
+            font=self.PDF_SETTINGS['font'],
+            font_path=self.PDF_SETTINGS['font_path']
         )
         grocery_list = self._get_grocery_list(user_id=self.request.user.id)
 
         page = canvas.Canvas(response)
         self._fill_page(
-            grocery_list=grocery_list, page=page, settings=self.SETTINGS
+            grocery_list=grocery_list, page=page, settings=self.PDF_SETTINGS
         )
         page.showPage()
         page.save()
