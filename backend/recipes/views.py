@@ -8,7 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from rest_framework import generics, status, views, viewsets
+from rest_framework import status, views, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
@@ -21,7 +22,7 @@ from recipes.permissions import IsAuthorOrReadOnly
 from recipes.serializer import (FavoriteSerializer, IngredientSerializer,
                                 RecipeSerializer, ShoppingCartSerializer,
                                 TagSerializer)
-from users.views import UNSUB_ERR_MSG
+from users.views import NOT_EXISTING_ERR_MSG
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,34 +54,40 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    @action(detail=True, methods=['POST', 'DELETE'],
+            permission_classes=(IsAuthenticated,),
+            serializer_class=FavoriteSerializer,
+            queryset=Favorite.objects.all())
+    def favorite(self, request, pk=None):
+        request.data['user'] = request.user.id
+        request.data['recipe'] = pk
 
-class FavoriteView(generics.CreateAPIView, generics.DestroyAPIView):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = (IsAuthenticated,)
+        if request.method == 'POST':
+            serializer = self.get_serializer(data=request.data,
+                                             context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED,
+                            headers=headers)
 
-    def get_serializer_context(self):
-        context = {'request': self.request}
-        return context
+        elif request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, id=pk)
+            instance = self.queryset.filter(user=request.user, recipe=recipe)
+            if not instance:
+                return Response({'error': NOT_EXISTING_ERR_MSG},
+                                status=status.HTTP_400_BAD_REQUEST)
+            self.perform_destroy(instance.first())
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def create(self, request, *args, **kwargs):
-        request.data['user'] = self.request.user.id
-        request.data['recipe'] = self.kwargs.get('pk')
-        return super().create(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
-        instance = self.queryset.filter(user=request.user, recipe=recipe)
-        if not instance:
-            return Response({'error': UNSUB_ERR_MSG},
-                            status=status.HTTP_400_BAD_REQUEST)
-        self.perform_destroy(instance.first())
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class ShoppingCartView(FavoriteView):
-    queryset = ShoppingCart.objects.all()
-    serializer_class = ShoppingCartSerializer
+    @action(detail=True, methods=['POST', 'DELETE'],
+            permission_classes=(IsAuthenticated,),
+            serializer_class=ShoppingCartSerializer,
+            queryset=ShoppingCart.objects.all())
+    def shopping_cart(self, request, pk=None):
+        return self.favorite(request, pk)
 
 
 class DownloadCartView(views.APIView):

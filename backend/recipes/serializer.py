@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from django.core.files.base import ContentFile
 from django.db.models import F
-from rest_framework.serializers import (ImageField, IntegerField,
+from rest_framework.serializers import (CharField, ImageField, IntegerField,
                                         ModelSerializer,
                                         PrimaryKeyRelatedField,
                                         SerializerMethodField,
@@ -22,6 +22,9 @@ class Base64ImageField(ImageField):
             ext = format.split('/')[-1]
             data = ContentFile(b64decode(imgstr), name='temp.' + ext)
         return super().to_internal_value(data)
+
+    def to_representation(self, value):
+        return self.context['request'].build_absolute_uri(value.url)
 
 
 class TagSerializer(ModelSerializer):
@@ -130,9 +133,17 @@ class RecipeSerializer(ModelSerializer):
 
 
 class FavoriteSerializer(ModelSerializer):
+    id = IntegerField(source='recipe.id', read_only=True)
+    name = CharField(source='recipe.name', read_only=True)
+    cooking_time = IntegerField(source='recipe.cooking_time', read_only=True)
+    image = Base64ImageField(source='recipe.image', read_only=True)
+
     class Meta:
         model = Favorite
-        fields = ('recipe', 'user')
+        fields = (
+            'recipe', 'user', 'id', 'name', 'cooking_time', 'image')
+        extra_kwargs = {'user': {'write_only': True},
+                        'recipe': {'write_only': True}}
         validators = [
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
@@ -141,18 +152,10 @@ class FavoriteSerializer(ModelSerializer):
             ),
         ]
 
-    def to_representation(self, instance):
-        build_full_url = self.context['request'].build_absolute_uri
-        return {'id': instance.recipe.id,
-                'name': instance.recipe.name,
-                'cooking_time': instance.recipe.cooking_time,
-                'image': build_full_url(instance.recipe.image.url)}
-
 
 class ShoppingCartSerializer(FavoriteSerializer):
-    class Meta:
+    class Meta(FavoriteSerializer.Meta):
         model = ShoppingCart
-        fields = ('recipe', 'user')
         validators = [
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
