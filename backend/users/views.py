@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from rest_framework import generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +9,13 @@ from rest_framework.response import Response
 from recipes.constants import Messages
 from users.models import Subscription, User
 from users.serializer import SubscribeSerializer
+
+
+class UserView(UserViewSet):
+    def get_permissions(self):
+        if self.action == "me" and self.request.user.is_anonymous:
+            return (IsAuthenticated(),)
+        return super().get_permissions()
 
 
 class SubscriptionListView(generics.ListAPIView):
