@@ -6,6 +6,7 @@ from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueTogetherValidator
 
+from recipes.constants import Messages
 from users.models import Subscription, User
 
 
@@ -33,13 +34,13 @@ class SubscribeSerializer(ModelSerializer):
             UniqueTogetherValidator(
                 queryset=Subscription.objects.all(),
                 fields=('user', 'subscription'),
-                message='Вы уже подписаны на этого пользователя',
+                message=Messages.ALREADY_EXISTING_ERROR,
             ),
         ]
 
     def validate(self, data):
         if data['user'] == data['subscription']:
-            raise ValidationError('Вы не можете быть подписаны на себя')
+            raise ValidationError(Messages.SUBSCRIBE_BY_YOURSELF_ERROR)
         return data
 
     def to_representation(self, instance):

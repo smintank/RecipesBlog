@@ -2,18 +2,17 @@ from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from recipes.constants import (MAX_COOKING_TIME, MAX_STANDARD_FIELD_LENGTH,
-                               MIN_COOKING_TIME)
+from recipes.constants import Limits
 from users.models import User
 
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=MAX_STANDARD_FIELD_LENGTH,
+        max_length=Limits.MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=MAX_STANDARD_FIELD_LENGTH,
+        max_length=Limits.MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Единица измерения'
     )
 
@@ -28,7 +27,7 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=MAX_STANDARD_FIELD_LENGTH,
+        max_length=Limits.MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Имя',
         unique=True
     )
@@ -37,7 +36,7 @@ class Tag(models.Model):
         unique=True
     )
     slug = models.SlugField(
-        max_length=MAX_STANDARD_FIELD_LENGTH,
+        max_length=Limits.MAX_STANDARD_FIELD_LENGTH,
         unique=True
     )
 
@@ -52,7 +51,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     name = models.CharField(
-        max_length=MAX_STANDARD_FIELD_LENGTH,
+        max_length=Limits.MAX_STANDARD_FIELD_LENGTH,
         verbose_name='Название',
     )
     author = models.ForeignKey(
@@ -85,8 +84,8 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления',
-        validators=[MinValueValidator(MIN_COOKING_TIME),
-                    MaxValueValidator(MAX_COOKING_TIME)])
+        validators=[MinValueValidator(Limits.MIN_STANDARD_VALUE),
+                    MaxValueValidator(Limits.MAX_COOKING_TIME)])
     pub_date = models.DateTimeField(
         verbose_name='Дата создания',
         auto_now_add=True

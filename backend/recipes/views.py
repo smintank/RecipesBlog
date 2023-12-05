@@ -15,7 +15,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.constants import Messages
+from recipes.constants import Messages, PdfSettings
 from recipes.filters import IngredientFilter, RecipeFilter
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
@@ -91,32 +91,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class DownloadCartView(views.APIView):
-    PDF_SETTINGS = {
-        'file_name': 'groceries.pdf',
-        'title_text': 'Список покупок',
-        'title_x_y': (230, 800),
-        'font': 'Roboto-Regular',
-        'font_path': 'Roboto-Regular.ttf',
-        'title_font_size': 16,
-        'text_font_size': 12,
-        'ingredient_x': 70,
-        'amount_x': 450,
-        'row_start_y': 760,
-        'row_shift_y': 25,
-    }
 
     def get(self, request, *args, **kwargs):
         buffer = io.BytesIO()
         response = self._set_settings(
-            filename=self.PDF_SETTINGS['file_name'],
-            font=self.PDF_SETTINGS['font'],
-            font_path=self.PDF_SETTINGS['font_path']
+            filename=PdfSettings.FILE_NAME,
+            font=PdfSettings.FONT,
+            font_path=PdfSettings.FONT_PATH
         )
         grocery_list = self._get_grocery_list(user_id=self.request.user.id)
 
         page = canvas.Canvas(response)
         self._fill_page(
-            grocery_list=grocery_list, page=page, settings=self.PDF_SETTINGS
+            grocery_list=grocery_list, page=page, settings=PdfSettings
         )
         page.showPage()
         page.save()
@@ -126,19 +113,19 @@ class DownloadCartView(views.APIView):
 
     @staticmethod
     def _fill_page(grocery_list, page, settings):
-        page.setFont(settings['font'], settings['title_font_size'])
-        page.drawString(*settings['title_x_y'], text=settings['title_text'])
-        page.setFont(settings['font'], settings['text_font_size'])
-        row_y = settings['row_start_y']
+        page.setFont(settings.FONT, settings.TITLE_FONT_SIZE)
+        page.drawString(*settings.TITLE_X_Y, text=settings.TITLE_TEXT)
+        page.setFont(settings.FONT, settings.TEXT_FONT_SIZE)
+        row_y = settings.ROW_START_Y
 
         for i, item in enumerate(grocery_list, start=1):
-            row_y -= settings['row_shift_y']
+            row_y -= settings.ROW_SHIFT_Y
             name = item['name'].capitalize()
             amount = item['amount']
             unit = item['measurement_unit']
 
-            page.drawString(settings['ingredient_x'], row_y, f'{i}. {name}')
-            page.drawString(settings['amount_x'], row_y, f'{amount} {unit}')
+            page.drawString(settings.INGREDIENT_X, row_y, f'{i}. {name}')
+            page.drawString(settings.AMOUNT_X, row_y, f'{amount} {unit}')
 
     @staticmethod
     def _get_grocery_list(user_id):

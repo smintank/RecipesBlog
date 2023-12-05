@@ -9,7 +9,7 @@ from rest_framework.serializers import (CharField, ImageField, IntegerField,
                                         SerializerMethodField, ValidationError)
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.constants import Messages
+from recipes.constants import Limits, Messages
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.serializer import UserSerializer
@@ -48,7 +48,8 @@ class RecipeIngredientSerializer(ModelSerializer):
         queryset=Ingredient.objects.all(),
         write_only=True
     )
-    amount = IntegerField(min_value=1, write_only=True)
+    amount = IntegerField(min_value=Limits.MIN_STANDARD_VALUE,
+                          max_value=Limits.MAX_AMOUNT, write_only=True)
 
     class Meta:
         model = RecipeIngredient
@@ -61,7 +62,8 @@ class RecipeSerializer(ModelSerializer):
     image = Base64ImageField()
     is_favorited = SerializerMethodField(read_only=True)
     is_in_shopping_cart = SerializerMethodField(read_only=True)
-    cooking_time = IntegerField(min_value=1, max_value=600)
+    cooking_time = IntegerField(min_value=Limits.MIN_STANDARD_VALUE,
+                                max_value=Limits.MAX_COOKING_TIME)
 
     class Meta:
         model = Recipe
