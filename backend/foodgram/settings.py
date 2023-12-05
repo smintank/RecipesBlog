@@ -69,7 +69,7 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
         'HOST': 'localhost',
-        'PORT': 5454
+        'PORT': 5432
     }
 }
 
@@ -145,3 +145,6 @@ DJOSER = {
         'current_user': 'users.serializer.UserSerializer',
     }
 }
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
