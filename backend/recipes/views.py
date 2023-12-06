@@ -1,7 +1,6 @@
 import io
 
-from django.db.models import F, IntegerField
-from django.db.models.functions import Cast
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -121,7 +120,7 @@ class DownloadCartView(views.APIView):
         for i, item in enumerate(grocery_list, start=1):
             row_y -= settings.ROW_SHIFT_Y
             name = item['name'].capitalize()
-            amount = item['amount']
+            amount = item['amount_sum']
             unit = item['measurement_unit']
 
             page.drawString(settings.INGREDIENT_X, row_y, f'{i}. {name}')
@@ -129,22 +128,16 @@ class DownloadCartView(views.APIView):
 
     @staticmethod
     def _get_grocery_list(user_id):
-        ingredient_set = RecipeIngredient.objects.values(
+        ingredient_set = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=user_id
+        ).values(
             name=F('ingredient__name'),
             measurement_unit=F('ingredient__measurement_unit')
         ).annotate(
-            amount=Cast('amount', IntegerField())
-        ).filter(
-            recipe__shopping_cart__user=user_id
+            amount_sum=Sum('amount')
         ).order_by('name')
 
-        ingredient_sum = []
-        for item in ingredient_set:
-            if ingredient_sum and item['name'] == ingredient_sum[-1]['name']:
-                ingredient_sum[-1]['amount'] += item['amount']
-            else:
-                ingredient_sum.append(item)
-        return ingredient_sum
+        return ingredient_set
 
     @staticmethod
     def _set_settings(filename, font=None, font_path=None):
