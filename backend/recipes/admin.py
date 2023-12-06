@@ -7,7 +7,7 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    extra = 1
+    extra = 0
     verbose_name = 'ингредиент'
     verbose_name_plural = 'Ингредиенты'
     fields = ('ingredient', 'amount')
