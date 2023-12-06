@@ -53,40 +53,45 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['POST', 'DELETE'],
-            permission_classes=(IsAuthenticated,),
+    @action(detail=True, methods=['POST'], queryset=Favorite.objects.all(),
             serializer_class=FavoriteSerializer,
-            queryset=Favorite.objects.all())
+            permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk=None):
+        return self._create_record(request, pk)
+
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk=None):
+        return self._delete_record(request, pk)
+
+    @action(detail=True, methods=['POST'], queryset=ShoppingCart.objects.all(),
+            serializer_class=ShoppingCartSerializer,
+            permission_classes=(IsAuthenticated,))
+    def shopping_cart(self, request, pk=None):
+        return self._create_record(request, pk)
+
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk=None):
+        return self._delete_record(request, pk)
+
+    def _create_record(self, request, pk):
         request.data['user'] = request.user.id
         request.data['recipe'] = pk
+        serializer = self.get_serializer(data=request.data,
+                                         context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+                        headers=headers)
 
-        if request.method == 'POST':
-            serializer = self.get_serializer(data=request.data,
-                                             context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
-                            headers=headers)
-
-        elif request.method == 'DELETE':
-            recipe = get_object_or_404(Recipe, id=pk)
-            instance = self.queryset.filter(user=request.user, recipe=recipe)
-            if not instance:
-                return Response({'error': Messages.NOT_EXISTING_ERROR},
-                                status=status.HTTP_400_BAD_REQUEST)
-            self.perform_destroy(instance.first())
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['POST', 'DELETE'],
-            permission_classes=(IsAuthenticated,),
-            serializer_class=ShoppingCartSerializer,
-            queryset=ShoppingCart.objects.all())
-    def shopping_cart(self, request, pk=None):
-        return self.favorite(request, pk)
+    def _delete_record(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        instance = self.queryset.filter(user=request.user, recipe=recipe)
+        if not instance:
+            return Response({'error': Messages.NOT_EXISTING_ERROR},
+                            status=status.HTTP_400_BAD_REQUEST)
+        self.perform_destroy(instance.first())
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DownloadCartView(views.APIView):
