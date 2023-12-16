@@ -1,6 +1,6 @@
 # Foodgram
 
-![alt preview](main.jpg)
+![alt preview](main.png)
 
 ## Описание:
 Foodgram - это вебсайт для любителей готовить и делиться своими рецептами с другими людьми. 
