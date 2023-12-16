@@ -1,5 +1,7 @@
 # Foodgram
 
+![alt preview](main.jpg)
+
 ## Описание:
 Foodgram - это вебсайт для любителей готовить и делиться своими рецептами с другими людьми. 
 Frontend - это одностраничное SPA-приложение, написанное на фреймворкe React, backend написан на Django Rest Framework. Разворачивается вебсайт на сервере при помощи Docker Compose. Настроены CI/CD через Github Actions. 
