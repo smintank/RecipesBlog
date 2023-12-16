@@ -245,13 +245,3 @@ sudo systemctl reload nginx
 
 ## Сделать коммит!
 Запустится автоматическая загрузка и установка на сервер
-
-
-
-### Credentials:
-
-Address: smfoodgram.ru
-
-Login: admin@mail.com
-
-Pass: yandex_diploma_admin_pass
